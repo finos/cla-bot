@@ -1,5 +1,11 @@
 {
-  "key": "value",
-  "key2": "value2",
-  "other_key": "other_value"
+  "body": {
+    "action": "opened",
+    "pull_request": {
+      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/5",
+      "user": {
+        "login": "ColinEberhardt"
+      }
+    }
+  }
 }

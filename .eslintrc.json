@@ -2,6 +2,7 @@
   "root": true,
   "extends": "standard",
   "rules": {
-    "semi": ["error", "always"]
+    "semi": ["error", "always"],
+    "padded-blocks": 0
   }
 }

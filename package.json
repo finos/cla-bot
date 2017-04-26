@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "execute": "node-lambda run --configFile deploy.env",
+    "deploy": "node-lambda deploy --configFile deploy.env",
+    "test": "npm run lint && jasmine",
+    "lint": "eslint --ignore-path .gitignore **/*.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +20,8 @@
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-node": "^4.2.2",
     "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1"
+    "eslint-plugin-standard": "^3.0.1",
+    "jasmine": "^2.6.0",
+    "node-lambda": "^0.9.0"
   }
 }

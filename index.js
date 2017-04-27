@@ -1,6 +1,4 @@
-const label = 'cla-signed';
-
-const message = 'Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\'t seem to have you on file. In order for us to review and merge your code, please contact @ColinEberhardt to find out how to get yourself added.';
+const defaultMessage = 'Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\'t seem to have you on file. In order for us to review and merge your code, please contact the project maintainers to get yourself added.';
 
 exports.handler = (event, context, callback, request) => {
   // TODO: log callback invocations
@@ -32,12 +30,11 @@ exports.handler = (event, context, callback, request) => {
         // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
         callback(error.toString());
         reject(error);
-      } else if (response && response.statusCode && response.statusCode !== 200) {
+      } else if (response && response.statusCode && !response.statusCode.toString().startsWith('2')) {
         // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
         callback(null, {'message': 'GitHub API request failed', statusCode: response.statusCode, body});
         reject(new Error('GitHub API request failed'));
       } else {
-        // console.log(body);
         resolve(body);
       }
     });
@@ -55,6 +52,10 @@ exports.handler = (event, context, callback, request) => {
     method: 'GET'
   }))
   .then(body => {
+
+    const label = body.label || 'cla-signed';
+    const message = body.message || defaultMessage;
+
     if (body.contributors.indexOf(user) !== -1) {
       console.log(`CLA approved for ${user} - adding label ${label} to ${issueUrl}`);
       // TODO: what if the label doesn't exists?

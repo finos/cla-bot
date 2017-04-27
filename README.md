@@ -11,8 +11,8 @@ This project is very much a work-in-progress, so is not intended for production 
 A bunch of things I'd like to do in order to make this an MVP.
 
   - [ ] Verify the users for each commit rather than the user that created the PR
-  - [ ] Make the user whitelist configurable (it's hard-coded in `index.js` at the moment!)
-  - [ ] Allow users to add a `.cla-bot` file to their repo to provide configuration (this could fix the above)
+  - [x] Make the user whitelist configurable (it's hard-coded in `index.js` at the moment!)
+  - [x] Allow users to add a `.clabot` file to their repo to provide configuration (this could fix the above)
   - [ ] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
   - [ ] Allow PRs to be re-checked after a user has signed a CLI (perhaps the bot could be 'pinged' via a comment?)
   - [ ] Turn this into a GitHub integration rather than a manually configured webhook

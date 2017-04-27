@@ -84,7 +84,7 @@ describe('lambda function', () => {
     });
   });
 
-  it('should handle HTTP status codes that are not OK (200)', (done) => {
+  it('should handle HTTP status codes that are not OK (2xx)', (done) => {
     lambda.handler(event, {},
       (_, result) => {
         expect(result.message).toEqual('GitHub API request failed');

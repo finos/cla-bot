@@ -2,10 +2,13 @@
   "body": {
     "action": "opened",
     "pull_request": {
-      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/5",
+      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/3",
       "user": {
         "login": "ColinEberhardt"
       }
+    },
+    "repo": {
+      "url": "https://api.github.com/repos/ColinEberhardt/slabot-test"
     }
   }
 }

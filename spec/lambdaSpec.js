@@ -42,7 +42,7 @@ describe('lambda function', () => {
             login: 'ColinEberhardt'
           }
         },
-        repo: {
+        repository: {
           url: 'http://foo.com/bar'
         }
       }
@@ -77,7 +77,7 @@ describe('lambda function', () => {
 
   it('should propagate HTTP request errors', (done) => {
     // create a mal-formed URL
-    event.body.repo.url = 'http:://foo.com/bar';
+    event.body.repository.url = 'http:://foo.com/bar';
     lambda.handler(event, {}, (err) => {
       expect(err).toEqual('Error: Invalid URI "http:://foo.com/bar/contents/.clabot"');
       done();

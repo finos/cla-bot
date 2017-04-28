@@ -44,7 +44,7 @@ exports.handler = (event, context, callback, request) => {
   const issueUrl = event.body.pull_request.issue_url;
 
   githubRequest({
-    url: event.body.repo.url + '/contents/.clabot',
+    url: event.body.repository.url + '/contents/.clabot',
     method: 'GET'
   })
   .then(body => githubRequest({

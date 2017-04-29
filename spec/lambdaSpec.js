@@ -1,10 +1,15 @@
 /* globals describe it beforeEach expect fail */
 
 const lambda = require('../index');
+const ursa = require('ursa');
+const fs = require('fs');
 
 const noop = () => {};
 
 const merge = (a, b) => Object.assign({}, a, b);
+
+const crt = ursa.createPublicKey(fs.readFileSync('clabotkey.pub'));
+const userToken = 'this-is-a-test';
 
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
@@ -59,7 +64,8 @@ describe('lambda function', () => {
       // the next is to download the .clabot config file
       'http://raw.foo.com/bar/contents/.clabot': {
         body: {
-          contributors: ['ColinEberhardt']
+          contributors: ['ColinEberhardt'],
+          token: crt.encrypt(userToken, 'utf8', 'base64')
         }
       }
     };
@@ -107,6 +113,17 @@ describe('lambda function', () => {
         verifyRequest: (opts) =>
           expect(opts.headers.Authorization).toEqual('token test-token')
       }));
+  });
+
+  it('should use the clients auth token for labelling', (done) => {
+    const mock = mockMultiRequest(merge(mockConfig, {
+      'http://foo.com/bar/labels': {
+        verifyRequest: (opts) => {
+          expect(opts.headers.Authorization).toEqual('token ' + userToken);
+        }
+      }
+    }));
+    lambda.handler(event, {}, done, mock);
   });
 
   it('should label pull requests from users with a signed CLA', (done) => {

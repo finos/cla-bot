@@ -1,3 +1,8 @@
+const ursa = require('ursa');
+const fs = require('fs');
+
+const privateKey = ursa.createPrivateKey(fs.readFileSync('clabotkey.pem'));
+
 const defaultMessage = 'Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\'t seem to have you on file. In order for us to review and merge your code, please contact the project maintainers to get yourself added.';
 
 exports.handler = (event, context, callback, request) => {
@@ -7,17 +12,19 @@ exports.handler = (event, context, callback, request) => {
     return;
   }
 
+  const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
+
   // for test purposes we pass in a mocked request object
   request = request || require('request');
 
   // adapts the request API to provide generic handling of HTTP / transport errors and
   // error responses from the GitHub API.
-  const githubRequest = (opts) => new Promise((resolve, reject) => {
+  const githubRequest = (opts, token = clabotToken) => new Promise((resolve, reject) => {
     // merge the standard set of HTTP request options
     const mergedOptions = Object.assign({}, {
       json: true,
       headers: {
-        'Authorization': 'token ' + process.env.GITHUB_ACCESS_TOKEN,
+        'Authorization': 'token ' + token,
         'User-Agent': 'github-cla-bot'
       },
       method: 'POST'
@@ -53,6 +60,7 @@ exports.handler = (event, context, callback, request) => {
   }))
   .then(body => {
 
+    const userToken = privateKey.decrypt(body.token, 'base64', 'utf8');
     const label = body.label || 'cla-signed';
     const message = body.message || defaultMessage;
 
@@ -62,7 +70,7 @@ exports.handler = (event, context, callback, request) => {
       return githubRequest({
         url: issueUrl + '/labels',
         body: [label]
-      })
+      }, userToken)
       .then(() => callback(null, {'message': `added label ${label} to ${issueUrl}`}));
     } else {
       console.log(`CLA not found for ${user} - adding a comment to ${issueUrl}`);

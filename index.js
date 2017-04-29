@@ -35,12 +35,10 @@ exports.handler = (event, context, callback, request) => {
     request(mergedOptions, (error, response, body) => {
       if (error) {
         // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
-        callback(error.toString());
-        reject(error);
+        reject(error.toString());
       } else if (response && response.statusCode && !response.statusCode.toString().startsWith('2')) {
         // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
-        callback(null, {'message': 'GitHub API request failed', statusCode: response.statusCode, body});
-        reject(new Error('GitHub API request failed'));
+        reject(new Error('GitHub API request failed with status ' + response.statusCode));
       } else {
         resolve(body);
       }
@@ -63,6 +61,7 @@ exports.handler = (event, context, callback, request) => {
     const userToken = privateKey.decrypt(body.token, 'base64', 'utf8');
     const label = body.label || 'cla-signed';
     const message = body.message || defaultMessage;
+    const statusUrl = event.body.repository.url + '/statuses/' + event.body.pull_request.head.sha;
 
     if (body.contributors.indexOf(user) !== -1) {
       console.log(`CLA approved for ${user} - adding label ${label} to ${issueUrl}`);
@@ -71,6 +70,13 @@ exports.handler = (event, context, callback, request) => {
         url: issueUrl + '/labels',
         body: [label]
       }, userToken)
+      .then(body => githubRequest({
+        url: statusUrl,
+        body: {
+          state: 'success',
+          context: 'verification/cla-signed'
+        }
+      }, userToken))
       .then(() => callback(null, {'message': `added label ${label} to ${issueUrl}`}));
     } else {
       console.log(`CLA not found for ${user} - adding a comment to ${issueUrl}`);
@@ -78,6 +84,13 @@ exports.handler = (event, context, callback, request) => {
         url: issueUrl + '/comments',
         body: {body: message}
       })
+      .then(body => githubRequest({
+        url: statusUrl,
+        body: {
+          state: 'failure',
+          context: 'verification/cla-signed'
+        }
+      }, userToken))
       .then(() => callback(null, {'message': `CLA has not been signed by ${user}, added a comment to ${issueUrl}`}));
     }
   })

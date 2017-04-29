@@ -45,6 +45,9 @@ describe('lambda function', () => {
           issue_url: 'http://foo.com/bar',
           user: {
             login: 'ColinEberhardt'
+          },
+          head: {
+            sha: '1234'
           }
         },
         repository: {
@@ -75,7 +78,8 @@ describe('lambda function', () => {
 
   it('should ignore actions that are not pull requests being opened', (done) => {
     event.body.action = 'label';
-    lambda.handler(event, {}, (_, result) => {
+    lambda.handler(event, {}, (err, result) => {
+      expect(err).toBeNull();
       expect(result.message).toEqual('ignored action of type label');
       done();
     });
@@ -92,17 +96,14 @@ describe('lambda function', () => {
 
   it('should handle HTTP status codes that are not OK (2xx)', (done) => {
     lambda.handler(event, {},
-      (_, result) => {
-        expect(result.message).toEqual('GitHub API request failed');
-        expect(result.body).toEqual('some error reported by GitHub');
-        expect(result.statusCode).toEqual(404);
+      (err, result) => {
+        expect(err).toEqual('Error: GitHub API request failed with status 404');
         done();
       },
       mockRequest({
         response: {
           statusCode: 404
-        },
-        body: 'some error reported by GitHub'
+        }
       }));
   });
 
@@ -117,6 +118,7 @@ describe('lambda function', () => {
 
   it('should use the clients auth token for labelling', (done) => {
     const mock = mockMultiRequest(merge(mockConfig, {
+      'http://foo.com/bar/statuses/1234': {},
       'http://foo.com/bar/labels': {
         verifyRequest: (opts) => {
           expect(opts.headers.Authorization).toEqual('token ' + userToken);
@@ -128,6 +130,12 @@ describe('lambda function', () => {
 
   it('should label pull requests from users with a signed CLA', (done) => {
     const mock = mockMultiRequest(merge(mockConfig, {
+      'http://foo.com/bar/statuses/1234': {
+        verifyRequest: (opts) => {
+          expect(opts.body.state).toEqual('success');
+          expect(opts.body.context).toEqual('verification/cla-signed');
+        }
+      },
       'http://foo.com/bar/labels': {
         verifyRequest: (opts) => {
           expect(opts.url).toEqual('http://foo.com/bar/labels');
@@ -136,7 +144,8 @@ describe('lambda function', () => {
       }
     }));
     lambda.handler(event, {},
-      (_, result) => {
+      (err, result) => {
+        expect(err).toBeNull();
         expect(result.message).toEqual('added label cla-signed to http://foo.com/bar');
         done();
       }, mock);
@@ -147,12 +156,19 @@ describe('lambda function', () => {
     event.body.pull_request.user.login = 'foo';
 
     const mock = mockMultiRequest(merge(mockConfig, {
+      'http://foo.com/bar/statuses/1234': {
+        verifyRequest: (opts) => {
+          expect(opts.body.state).toEqual('failure');
+          expect(opts.body.context).toEqual('verification/cla-signed');
+        }
+      },
       // this is enough to verify that the URL was invoked!
       'http://foo.com/bar/comments': {}
     }));
 
     lambda.handler(event, {},
-      (_, result) => {
+      (err, result) => {
+        expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by foo, added a comment to http://foo.com/bar');
         done();
       }, mock);

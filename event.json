@@ -2,9 +2,12 @@
   "body": {
     "action": "opened",
     "pull_request": {
-      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/6",
+      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/9",
       "user": {
         "login": "ColinEberhardt"
+      },
+      "head": {
+        "sha": "d8450f967cf19d487fff42fbc14cfa4113db8a1a"
       }
     },
     "repository": {

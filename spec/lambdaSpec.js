@@ -162,8 +162,11 @@ describe('lambda function', () => {
           expect(opts.body.context).toEqual('verification/cla-signed');
         }
       },
-      // this is enough to verify that the URL was invoked!
-      'http://foo.com/bar/comments': {}
+      'http://foo.com/bar/comments': {
+        verifyRequest: (opts) => {
+          expect(opts.body.body).toContain('Thank you for your pull request');
+        }
+      }
     }));
 
     lambda.handler(event, {},

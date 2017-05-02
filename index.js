@@ -2,13 +2,12 @@ const ursa = require('ursa');
 const fs = require('fs');
 
 const privateKey = ursa.createPrivateKey(fs.readFileSync('clabotkey.pem'));
+const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
-const defaultMessage = 'Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\'t seem to have you on file. In order for us to review and merge your code, please contact the project maintainers to get yourself added.';
-
-exports.handler = (event, context, callback, request) => {
+exports.handler = ({ body }, context, callback, request) => {
   // TODO: log callback invocations
-  if (event.body.action !== 'opened') {
-    callback(null, {'message': 'ignored action of type ' + event.body.action});
+  if (body.action !== 'opened') {
+    callback(null, {'message': 'ignored action of type ' + body.action});
     return;
   }
 
@@ -45,30 +44,30 @@ exports.handler = (event, context, callback, request) => {
     });
   });
 
-  const user = event.body.pull_request.user.login;
-  const issueUrl = event.body.pull_request.issue_url;
+  const user = body.pull_request.user.login;
+  const issueUrl = body.pull_request.issue_url;
 
   githubRequest({
-    url: event.body.repository.url + '/contents/.clabot',
+    url: body.repository.url + '/contents/.clabot',
     method: 'GET'
   })
   .then(body => githubRequest({
     url: body.download_url,
     method: 'GET'
   }))
-  .then(body => {
+  .then(config => {
 
-    const userToken = privateKey.decrypt(body.token, 'base64', 'utf8');
-    const label = body.label || 'cla-signed';
-    const message = body.message || defaultMessage;
-    const statusUrl = event.body.repository.url + '/statuses/' + event.body.pull_request.head.sha;
+    config = Object.assign({}, defaultConfig, config);
 
-    if (body.contributors.indexOf(user) !== -1) {
-      console.log(`CLA approved for ${user} - adding label ${label} to ${issueUrl}`);
+    const userToken = privateKey.decrypt(config.token, 'base64', 'utf8');
+    const statusUrl = body.repository.url + '/statuses/' + body.pull_request.head.sha;
+
+    if (config.contributors.indexOf(user) !== -1) {
+      console.log(`CLA approved for ${user} - adding label ${config.label} to ${issueUrl}`);
       // TODO: what if the label doesn't exists?
       return githubRequest({
         url: issueUrl + '/labels',
-        body: [label]
+        body: [config.label]
       }, userToken)
       .then(body => githubRequest({
         url: statusUrl,
@@ -77,12 +76,12 @@ exports.handler = (event, context, callback, request) => {
           context: 'verification/cla-signed'
         }
       }, userToken))
-      .then(() => callback(null, {'message': `added label ${label} to ${issueUrl}`}));
+      .then(() => callback(null, {'message': `added label ${config.label} to ${issueUrl}`}));
     } else {
       console.log(`CLA not found for ${user} - adding a comment to ${issueUrl}`);
       return githubRequest({
         url: issueUrl + '/comments',
-        body: {body: message}
+        body: {body: config.message}
       })
       .then(body => githubRequest({
         url: statusUrl,

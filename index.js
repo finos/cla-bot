@@ -35,9 +35,15 @@ const addComment = (context) => ({
 });
 
 exports.handler = ({ body }, lambdaContext, callback, request) => {
+
+  const loggingCallback = (err, message) => {
+    console.log('callback', err, message);
+    callback(err, message);
+  };
+
   // TODO: log callback invocations
   if (body.action !== 'opened') {
-    callback(null, {'message': 'ignored action of type ' + body.action});
+    loggingCallback(null, {'message': 'ignored action of type ' + body.action});
     return;
   }
 
@@ -92,14 +98,14 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
         // TODO: what if the label doesn't exists?
         return githubRequest(addLabel(context), userToken)
           .then(() => githubRequest(setStatus(context, 'success'), userToken))
-          .then(() => callback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));
+          .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));
       } else {
         return githubRequest(addComment(context))
           .then(() => githubRequest(setStatus(context, 'failure'), userToken))
-          .then(() => callback(null, {'message': `CLA has not been signed by ${user}, added a comment to ${body.repository.url}`}));
+          .then(() => loggingCallback(null, {'message': `CLA has not been signed by ${user}, added a comment to ${body.repository.url}`}));
       }
     })
     .catch((err) => {
-      callback(err.toString());
+      loggingCallback(err.toString());
     });
 };

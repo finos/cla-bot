@@ -42,7 +42,7 @@ describe('lambda function', () => {
       body: {
         action: 'opened',
         pull_request: {
-          issue_url: 'http://foo.com/bar',
+          issue_url: 'http://foo.com/user/repo/issues/2',
           user: {
             login: 'ColinEberhardt'
           },
@@ -51,7 +51,7 @@ describe('lambda function', () => {
           }
         },
         repository: {
-          url: 'http://foo.com/bar'
+          url: 'http://foo.com/user/repo'
         }
       }
     };
@@ -59,13 +59,13 @@ describe('lambda function', () => {
     // mock the typical requests that the lambda function makes
     mockConfig = {
       // the first step is to make a request for the download URL for the cla config
-      'http://foo.com/bar/contents/.clabot': {
+      'http://foo.com/user/repo/contents/.clabot': {
         body: {
-          download_url: 'http://raw.foo.com/bar/contents/.clabot'
+          download_url: 'http://raw.foo.com/user/repo/contents/.clabot'
         }
       },
       // the next is to download the .clabot config file
-      'http://raw.foo.com/bar/contents/.clabot': {
+      'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
           contributors: ['ColinEberhardt'],
           token: crt.encrypt(userToken, 'utf8', 'base64')
@@ -87,9 +87,9 @@ describe('lambda function', () => {
 
   it('should propagate HTTP request errors', (done) => {
     // create a mal-formed URL
-    event.body.repository.url = 'http:://foo.com/bar';
+    event.body.repository.url = 'http:://foo.com/user/repo';
     lambda.handler(event, {}, (err) => {
-      expect(err).toEqual('Error: Invalid URI "http:://foo.com/bar/contents/.clabot"');
+      expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
       done();
     });
   });
@@ -118,8 +118,8 @@ describe('lambda function', () => {
 
   it('should use the clients auth token for labelling', (done) => {
     const mock = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/bar/statuses/1234': {},
-      'http://foo.com/bar/labels': {
+      'http://foo.com/user/repo/statuses/1234': {},
+      'http://foo.com/user/repo/issues/2/labels': {
         verifyRequest: (opts) => {
           expect(opts.headers.Authorization).toEqual('token ' + userToken);
         }
@@ -130,15 +130,14 @@ describe('lambda function', () => {
 
   it('should label pull requests from users with a signed CLA', (done) => {
     const mock = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/bar/statuses/1234': {
+      'http://foo.com/user/repo/statuses/1234': {
         verifyRequest: (opts) => {
           expect(opts.body.state).toEqual('success');
           expect(opts.body.context).toEqual('verification/cla-signed');
         }
       },
-      'http://foo.com/bar/labels': {
+      'http://foo.com/user/repo/issues/2/labels': {
         verifyRequest: (opts) => {
-          expect(opts.url).toEqual('http://foo.com/bar/labels');
           expect(opts.body).toEqual(['cla-signed']);
         }
       }
@@ -146,7 +145,7 @@ describe('lambda function', () => {
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
-        expect(result.message).toEqual('added label cla-signed to http://foo.com/bar');
+        expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo');
         done();
       }, mock);
   });
@@ -156,13 +155,13 @@ describe('lambda function', () => {
     event.body.pull_request.user.login = 'foo';
 
     const mock = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/bar/statuses/1234': {
+      'http://foo.com/user/repo/statuses/1234': {
         verifyRequest: (opts) => {
           expect(opts.body.state).toEqual('failure');
           expect(opts.body.context).toEqual('verification/cla-signed');
         }
       },
-      'http://foo.com/bar/comments': {
+      'http://foo.com/user/repo/issues/2/comments': {
         verifyRequest: (opts) => {
           expect(opts.body.body).toContain('Thank you for your pull request');
         }
@@ -172,7 +171,7 @@ describe('lambda function', () => {
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by foo, added a comment to http://foo.com/bar');
+        expect(result.message).toEqual('CLA has not been signed by foo, added a comment to http://foo.com/user/repo');
         done();
       }, mock);
   });

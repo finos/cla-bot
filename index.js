@@ -95,7 +95,6 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
       const userToken = privateKey.decrypt(config.token, 'base64', 'utf8');
 
       if (config.contributors.indexOf(user) !== -1) {
-        // TODO: what if the label doesn't exists?
         return githubRequest(addLabel(context), userToken)
           .then(() => githubRequest(setStatus(context, 'success'), userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));

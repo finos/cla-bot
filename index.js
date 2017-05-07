@@ -19,6 +19,11 @@ const addLabel = (context) => ({
   body: [context.config.label]
 });
 
+const getCommits = (context) => ({
+  url: context.webhook.pull_request.url + '/commits',
+  method: 'GET'
+});
+
 const setStatus = (context, state) => ({
   url: context.webhook.repository.url + '/statuses/' + context.webhook.pull_request.head.sha,
   body: {
@@ -89,19 +94,23 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
   githubRequest(getReadmeUrl(context))
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
-
+      context.userToken = privateKey.decrypt(config.token, 'base64', 'utf8');
       context.config = Object.assign({}, defaultConfig, config);
-
-      const userToken = privateKey.decrypt(config.token, 'base64', 'utf8');
-
-      if (config.contributors.indexOf(user) !== -1) {
-        return githubRequest(addLabel(context), userToken)
-          .then(() => githubRequest(setStatus(context, 'success'), userToken))
+      return githubRequest(getCommits(context), context.userToken);
+    })
+    .then((commits) => {
+      const committers = commits.map(c => c.author.login);
+      const isContributor = (user) => context.config.contributors.indexOf(user) !== -1;
+      if (committers.every(isContributor)) {
+        return githubRequest(addLabel(context), context.userToken)
+          .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));
       } else {
+        const nonContributors = committers.filter(c => !isContributor(c));
         return githubRequest(addComment(context))
-          .then(() => githubRequest(setStatus(context, 'failure'), userToken))
-          .then(() => loggingCallback(null, {'message': `CLA has not been signed by ${user}, added a comment to ${body.repository.url}`}));
+          .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
+          .then(() => loggingCallback(null,
+            {'message': `CLA has not been signed by users [${nonContributors.join(', ')}], added a comment to ${body.repository.url}`}));
       }
     })
     .catch((err) => {

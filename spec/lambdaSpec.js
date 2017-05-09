@@ -1,7 +1,7 @@
 /* globals describe it beforeEach expect fail */
 
 const lambda = require('../index');
-const ursa = require('ursa');
+const NodeRSA = require('node-rsa');
 const fs = require('fs');
 
 const noop = () => {};
@@ -10,7 +10,7 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 const merge = (a, b) => Object.assign({}, a, b);
 
-const crt = ursa.createPublicKey(fs.readFileSync('clabotkey.pub'));
+const crt = new NodeRSA(fs.readFileSync('clabotkey.pub'));
 const userToken = 'this-is-a-test';
 
 // mocks the request package to return the given response (error, response, body)
@@ -71,7 +71,7 @@ describe('lambda function', () => {
       'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
           contributors: ['ColinEberhardt'],
-          token: crt.encrypt(userToken, 'utf8', 'base64')
+          token: crt.encrypt(userToken, 'base64')
         }
       },
       // the next is to download the commits for the PR

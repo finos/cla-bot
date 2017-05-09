@@ -1,7 +1,7 @@
-const ursa = require('ursa');
+const NodeRSA = require('node-rsa');
 const fs = require('fs');
 
-const privateKey = ursa.createPrivateKey(fs.readFileSync('clabotkey.pem'));
+const privateKey = new NodeRSA(fs.readFileSync('clabotkey.pem'));
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
 const getReadmeUrl = (context) => ({
@@ -94,7 +94,7 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
   githubRequest(getReadmeUrl(context))
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
-      context.userToken = privateKey.decrypt(config.token, 'base64', 'utf8');
+      context.userToken = privateKey.decrypt(config.token, 'utf8');
       context.config = Object.assign({}, defaultConfig, config);
       return githubRequest(getCommits(context), context.userToken);
     })

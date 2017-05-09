@@ -12,8 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "request": "^2.81.0",
-    "ursa": "^0.9.4"
+    "node-rsa": "^0.4.2",
+    "request": "^2.81.0"
   },
   "devDependencies": {
     "eslint": "^3.19.0",

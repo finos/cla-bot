@@ -118,7 +118,7 @@ describe('lambda function', () => {
       });
       lambda.handler(event, {},
         (err, result) => {
-          expect(err).toEqual('Error: GitHub API request failed with status 404');
+          expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
         }, {request, key});
     });
@@ -217,8 +217,6 @@ describe('lambda function', () => {
 
   it('should report the names of all committers without CLA', (done) => {
     const request = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/user/repo/statuses/1234': {},
-      'http://foo.com/user/repo/issues/2/comments': {},
       'http://foo.com/user/repo/pulls/2/commits': {
         body: [
           // three commits, two from a user which is not a contributor
@@ -233,6 +231,35 @@ describe('lambda function', () => {
       (err, result) => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
+        done();
+      }, {request, key});
+  });
+
+  it('should support fetching of contributor list from a URL', (done) => {
+    const request = mockMultiRequest(merge(mockConfig, {
+      'http://raw.foo.com/user/repo/contents/.clabot': {
+        body: {
+          contributorListUrl: 'http://bar.com/contributors.txt',
+          token: key.encrypt(userToken, 'base64')
+        }
+      },
+      'http://bar.com/contributors.txt': {
+        body: ['bob']
+      },
+      'http://foo.com/user/repo/pulls/2/commits': {
+        body: [
+          // three commits, two from a user which is not a contributor
+          { author: { login: 'foo' } },
+          { author: { login: 'bob' } },
+          { author: { login: 'ColinEberhardt' } }
+        ]
+      }
+    }));
+
+    lambda.handler(event, {},
+      (err, result) => {
+        expect(err).toBeNull();
+        expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
         done();
       }, {request, key});
   });

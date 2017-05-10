@@ -3,8 +3,8 @@ const fs = require('fs');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
-const getReadmeUrl = (context) => ({
-  url: context.webhook.repository.url + '/contents/.clabot',
+const getReadmeUrl = ({webhook}) => ({
+  url: webhook.repository.url + '/contents/.clabot',
   method: 'GET'
 });
 
@@ -13,34 +13,58 @@ const getReadmeContents = (body) => ({
   method: 'GET'
 });
 
-const addLabel = (context) => ({
-  url: context.webhook.pull_request.issue_url + '/labels',
-  body: [context.config.label]
+const addLabel = ({webhook, config}) => ({
+  url: webhook.pull_request.issue_url + '/labels',
+  body: [config.label]
 });
 
-const getCommits = (context) => ({
-  url: context.webhook.pull_request.url + '/commits',
+const getCommits = ({webhook}) => ({
+  url: webhook.pull_request.url + '/commits',
   method: 'GET'
 });
 
-const setStatus = (context, state) => ({
-  url: context.webhook.repository.url + '/statuses/' + context.webhook.pull_request.head.sha,
+const setStatus = ({webhook}, state) => ({
+  url: webhook.repository.url + '/statuses/' + webhook.pull_request.head.sha,
   body: {
     state,
     context: 'verification/cla-signed'
   }
 });
 
-const addComment = (context) => ({
-  url: context.webhook.pull_request.issue_url + '/comments',
+const addComment = ({webhook, config}) => ({
+  url: webhook.pull_request.issue_url + '/comments',
   body: {
-    body: context.config.message
+    body: config.message
   }
 });
 
-const getNonContributors = (committers, config) => {
-  const isContributor = (user) => config.contributors.indexOf(user) !== -1;
-  return Promise.resolve(committers.filter(c => !isContributor(c)));
+const requestAsPromise = (request) => (opts) => new Promise((resolve, reject) => {
+  console.log('API Request', opts.url, opts.body || {});
+  request(opts, (error, response, body) => {
+    if (error) {
+      reject(error.toString());
+    } else if (response && response.statusCode && !response.statusCode.toString().startsWith('2')) {
+      reject(new Error(`API request ${opts.url} failed with status ${response.statusCode}`));
+    } else {
+      resolve(body);
+    }
+  });
+});
+
+const verifyContributors = (committers, {config}, request) => {
+  if (config.contributors) {
+    const isContributor = (user) => config.contributors.indexOf(user) !== -1;
+    return Promise.resolve(committers.filter(c => !isContributor(c)));
+  } else if (config.contributorListUrl) {
+    return requestAsPromise(request)({
+      url: config.contributorListUrl,
+      json: true
+    })
+    .then((contributors) => {
+      const isContributor = (user) => contributors.indexOf(user) !== -1;
+      return committers.filter(c => !isContributor(c));
+    });
+  }
 };
 
 exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
@@ -50,7 +74,6 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     callback(err, message);
   };
 
-  // TODO: log callback invocations
   if (body.action !== 'opened') {
     loggingCallback(null, {'message': 'ignored action of type ' + body.action});
     return;
@@ -67,31 +90,15 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
 
   // adapts the request API to provide generic handling of HTTP / transport errors and
   // error responses from the GitHub API.
-  const githubRequest = (opts, token = clabotToken) => new Promise((resolve, reject) => {
-    // merge the standard set of HTTP request options
-    const mergedOptions = Object.assign({}, {
+  const githubRequest = (opts, token = clabotToken) =>
+    requestAsPromise(request)(Object.assign({}, {
       json: true,
       headers: {
         'Authorization': 'token ' + token,
         'User-Agent': 'github-cla-bot'
       },
       method: 'POST'
-    }, opts);
-
-    // perform the request
-    console.log('GitHub API Request', opts.url, opts.body);
-    request(mergedOptions, (error, response, body) => {
-      if (error) {
-        // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
-        reject(error.toString());
-      } else if (response && response.statusCode && !response.statusCode.toString().startsWith('2')) {
-        // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)
-        reject(new Error('GitHub API request failed with status ' + response.statusCode));
-      } else {
-        resolve(body);
-      }
-    });
-  });
+    }, opts));
 
   console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
@@ -104,7 +111,7 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     })
     .then((commits) => {
       const committers = commits.map(c => c.author.login);
-      return getNonContributors(committers, context.config);
+      return verifyContributors(committers, context, request);
     })
     .then((nonContributors) => {
       if (nonContributors.length === 0) {

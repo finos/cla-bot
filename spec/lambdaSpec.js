@@ -2,7 +2,6 @@
 
 const lambda = require('../index');
 const NodeRSA = require('node-rsa');
-const fs = require('fs');
 
 const noop = () => {};
 
@@ -10,7 +9,7 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 const merge = (a, b) => Object.assign({}, a, b);
 
-const crt = new NodeRSA(fs.readFileSync('clabotkey.pub'));
+const key = new NodeRSA({b: 512});
 const userToken = 'this-is-a-test';
 
 // mocks the request package to return the given response (error, response, body)
@@ -71,7 +70,7 @@ describe('lambda function', () => {
       'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
           contributors: ['ColinEberhardt'],
-          token: crt.encrypt(userToken, 'base64')
+          token: key.encrypt(userToken, 'base64')
         }
       },
       // the next is to download the commits for the PR
@@ -108,20 +107,20 @@ describe('lambda function', () => {
       lambda.handler(event, {}, (err) => {
         expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
         done();
-      });
+      }, {key});
     });
 
     it('should handle HTTP status codes that are not OK (2xx)', (done) => {
+      const request = mockRequest({
+        response: {
+          statusCode: 404
+        }
+      });
       lambda.handler(event, {},
         (err, result) => {
           expect(err).toEqual('Error: GitHub API request failed with status 404');
           done();
-        },
-        mockRequest({
-          response: {
-            statusCode: 404
-          }
-        }));
+        }, {request, key});
     });
   });
 
@@ -139,26 +138,26 @@ describe('lambda function', () => {
 
     it('should add the bot GitHub auth token for the initial requests', (done) => {
       process.env.GITHUB_ACCESS_TOKEN = 'bot-token';
-      const mock = mockMultiRequest(verifyToken([
+      const request = mockMultiRequest(verifyToken([
         'http://foo.com/user/repo/contents/.clabot',
         'http://raw.foo.com/user/repo/contents/.clabot'
       ], 'bot-token'));
-      lambda.handler(event, {}, done, mock);
+      lambda.handler(event, {}, done, {request, key});
     });
 
     it('should use the clients auth token for labelling and status', (done) => {
-      const mock = mockMultiRequest(verifyToken([
+      const request = mockMultiRequest(verifyToken([
         'http://foo.com/user/repo/statuses/1234',
         'http://foo.com/user/repo/pulls/2/commits',
         'http://foo.com/user/repo/issues/2/comments',
         'http://foo.com/user/repo/issues/2/labels'
       ], userToken));
-      lambda.handler(event, {}, done, mock);
+      lambda.handler(event, {}, done, {request, key});
     });
   });
 
   it('should label pull requests from users with a signed CLA', (done) => {
-    const mock = mockMultiRequest(merge(mockConfig, {
+    const request = mockMultiRequest(merge(mockConfig, {
       'http://foo.com/user/repo/statuses/1234': {
         verifyRequest: (opts) => {
           expect(opts.body.state).toEqual('success');
@@ -183,11 +182,11 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo');
         done();
-      }, mock);
+      }, {request, key});
   });
 
   it('should comment on pull requests where a CLA has not been signed', (done) => {
-    const mock = mockMultiRequest(merge(mockConfig, {
+    const request = mockMultiRequest(merge(mockConfig, {
       'http://foo.com/user/repo/statuses/1234': {
         verifyRequest: (opts) => {
           expect(opts.body.state).toEqual('failure');
@@ -213,11 +212,11 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo');
         done();
-      }, mock);
+      }, {request, key});
   });
 
   it('should report the names of all committers without CLA', (done) => {
-    const mock = mockMultiRequest(merge(mockConfig, {
+    const request = mockMultiRequest(merge(mockConfig, {
       'http://foo.com/user/repo/statuses/1234': {},
       'http://foo.com/user/repo/issues/2/comments': {},
       'http://foo.com/user/repo/pulls/2/commits': {
@@ -235,6 +234,6 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo');
         done();
-      }, mock);
+      }, {request, key});
   });
 });

@@ -1,7 +1,6 @@
 const NodeRSA = require('node-rsa');
 const fs = require('fs');
 
-const privateKey = new NodeRSA(fs.readFileSync('clabotkey.pem'));
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
 const getReadmeUrl = (context) => ({
@@ -39,7 +38,7 @@ const addComment = (context) => ({
   }
 });
 
-exports.handler = ({ body }, lambdaContext, callback, request) => {
+exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
 
   const loggingCallback = (err, message) => {
     console.log('callback', err, message);
@@ -60,8 +59,9 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
 
   console.log(`Checking CLA for user ${user} and repository ${body.repository.url}`);
 
-  // for test purposes we pass in a mocked request object
-  request = request || require('request');
+  // for test purposes we pass in mocked external dependencies
+  const request = config.request || require('request');
+  const privateKey = config.key || new NodeRSA(fs.readFileSync('clabotkey.pem'));
 
   // adapts the request API to provide generic handling of HTTP / transport errors and
   // error responses from the GitHub API.

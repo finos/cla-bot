@@ -1,3 +1,33 @@
 language: node_js
 node_js:
-  - "6"
+- '6'
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv
+  -in clabotkey.pem.enc -out clabotkey.pem -d
+
+deploy:
+  - provider: lambda
+    function_name: clabot-prod
+    region: us-east-2
+    role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+    runtime: nodejs6.10
+    handler_name: handler
+    access_key_id: AKIAJKAOSYDLCXNH2NYQ
+    timeout: 15
+    on:
+      branch: master
+    secret_access_key:
+      secure: KLsuEBCFPT+Wxirj+mWt6a2/vkuh816a32orWA1rpPBD754PncpajWO31DmoVGzWc/OYuAdPHnEENCwlxGnHnIhe9rg09+px5KdXjd8hrpR0NjNRTLdqj5dTMKLj+viokW7du7vxrUlko5qp+jtIdzd4UZSzenamYG0vL4pq9GmJVYdaayYA2ALFkQMvu7QIKmrEep8ezdx4M33Nw5sz9S+k/EhO09ycKEhuXGvMGzFfYf0u652nNdLXv9Hk60tfnKZoSBbHI5i4T2AbULCyluslaa6FEQF5GAU69kfsgA8j96lKOF1xI/3buDJ6TpNkOrU7W6s2zOVW5aV9deaf6OJ8SVLX3s83NbF4xcMniAfbAXJ5gyY1Hdv7iq89e7PL6mPvFg+D9P16hZeKe7Pw+oUMIo1HZ8xgKCaITcmAS7DGWOKh8OPjBJb6ZxRjrkUNrsneqkcCg+JO6lBDoGy6UZkcRqoJPVOjkk2PiUbElVLLJZVAujyon9JaMWABZQw9JYvPSxpNTY1Sq6ppWfPFs4Cnghyw+qqiYxcYAF+epomwOxsMmn/Nm5A+nyYNlE1GaoWE9+gcvvcmOw347uF9TxTWoV68A5DOdNmaS0RrQHzfBbMqbZqkO+xgOraz5SkdtkoSZFC451kN2YktnkcUZtYRU4vAQ5EONbq4Zcv2Trc=
+  - provider: lambda
+    function_name: clabot-dev
+    region: us-east-2
+    role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+    runtime: nodejs6.10
+    handler_name: handler
+    access_key_id: AKIAJKAOSYDLCXNH2NYQ
+    timeout: 15
+    on:
+      branch: develop
+    secret_access_key:
+      secure: KLsuEBCFPT+Wxirj+mWt6a2/vkuh816a32orWA1rpPBD754PncpajWO31DmoVGzWc/OYuAdPHnEENCwlxGnHnIhe9rg09+px5KdXjd8hrpR0NjNRTLdqj5dTMKLj+viokW7du7vxrUlko5qp+jtIdzd4UZSzenamYG0vL4pq9GmJVYdaayYA2ALFkQMvu7QIKmrEep8ezdx4M33Nw5sz9S+k/EhO09ycKEhuXGvMGzFfYf0u652nNdLXv9Hk60tfnKZoSBbHI5i4T2AbULCyluslaa6FEQF5GAU69kfsgA8j96lKOF1xI/3buDJ6TpNkOrU7W6s2zOVW5aV9deaf6OJ8SVLX3s83NbF4xcMniAfbAXJ5gyY1Hdv7iq89e7PL6mPvFg+D9P16hZeKe7Pw+oUMIo1HZ8xgKCaITcmAS7DGWOKh8OPjBJb6ZxRjrkUNrsneqkcCg+JO6lBDoGy6UZkcRqoJPVOjkk2PiUbElVLLJZVAujyon9JaMWABZQw9JYvPSxpNTY1Sq6ppWfPFs4Cnghyw+qqiYxcYAF+epomwOxsMmn/Nm5A+nyYNlE1GaoWE9+gcvvcmOw347uF9TxTWoV68A5DOdNmaS0RrQHzfBbMqbZqkO+xgOraz5SkdtkoSZFC451kN2YktnkcUZtYRU4vAQ5EONbq4Zcv2Trc=

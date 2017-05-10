@@ -77,7 +77,7 @@ exports.handler = ({ body }, lambdaContext, callback, request) => {
     }, opts);
 
     // perform the request
-    console.log('GitHub API Request', opts.url);
+    console.log('GitHub API Request', opts.url, opts.body);
     request(mergedOptions, (error, response, body) => {
       if (error) {
         // TODO: does this reveal anything sensitive to the client? (i.e. the webhook)

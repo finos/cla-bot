@@ -2,7 +2,8 @@
   "body": {
     "action": "opened",
     "pull_request": {
-      "issue_url": "https://api.github.com/repos/ColinEberhardt/slabot-test/issues/9",
+      "issue_url": "https://api.github.com/repos/ColinEberhardt/clabot-test/issues/9",
+      "url": "https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/9",
       "user": {
         "login": "ColinEberhardt"
       },
@@ -11,7 +12,7 @@
       }
     },
     "repository": {
-      "url": "https://api.github.com/repos/ColinEberhardt/slabot-test"
+      "url": "https://api.github.com/repos/ColinEberhardt/clabot-test"
     }
   }
 }

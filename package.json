@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "execute": "node-lambda run --configFile deploy.env",
-    "deploy": "node-lambda deploy --configFile deploy.env",
     "test": "npm run lint && jasmine",
     "lint": "eslint --ignore-path .gitignore **/*.js"
   },

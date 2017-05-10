@@ -51,6 +51,4 @@ Success:
 
 ### Deploying
 
-In order to deploy to AWS, rename `deploy.env.example` to `deploy.env` and add your AWS tokens. Following this, run `npm run deploy`.
-
-For your function to be available via an HTTP endpoint, you'll also need to configure the AWS API Gateway. This involves a lot of form filling and mouse clicks. Enjoy.
+The bot is deployed automatically via Travis.

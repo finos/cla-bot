@@ -38,6 +38,11 @@ const addComment = (context) => ({
   }
 });
 
+const getNonContributors = (committers, config) => {
+  const isContributor = (user) => config.contributors.indexOf(user) !== -1;
+  return Promise.resolve(committers.filter(c => !isContributor(c)));
+};
+
 exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
 
   const loggingCallback = (err, message) => {
@@ -100,13 +105,14 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     })
     .then((commits) => {
       const committers = commits.map(c => c.author.login);
-      const isContributor = (user) => context.config.contributors.indexOf(user) !== -1;
-      if (committers.every(isContributor)) {
+      return getNonContributors(committers, context.config);
+    })
+    .then((nonContributors) => {
+      if (nonContributors.length === 0) {
         return githubRequest(addLabel(context), context.userToken)
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));
       } else {
-        const nonContributors = committers.filter(c => !isContributor(c));
         return githubRequest(addComment(context))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,

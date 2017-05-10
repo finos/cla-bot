@@ -180,7 +180,7 @@ describe('lambda function', () => {
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
-        expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo');
+        expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
         done();
       }, {request, key});
   });
@@ -210,7 +210,7 @@ describe('lambda function', () => {
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo');
+        expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
         done();
       }, {request, key});
   });
@@ -232,7 +232,7 @@ describe('lambda function', () => {
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo');
+        expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
         done();
       }, {request, key});
   });

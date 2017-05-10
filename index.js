@@ -57,12 +57,9 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
   }
 
   const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
-  const user = body.pull_request.user.login;
   const context = {
     webhook: body
   };
-
-  console.log(`Checking CLA for user ${user} and repository ${body.repository.url}`);
 
   // for test purposes we pass in mocked external dependencies
   const request = config.request || require('request');
@@ -96,6 +93,8 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     });
   });
 
+  console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
+
   githubRequest(getReadmeUrl(context))
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
@@ -111,12 +110,12 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
       if (nonContributors.length === 0) {
         return githubRequest(addLabel(context), context.userToken)
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
-          .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${body.repository.url}`}));
+          .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
       } else {
         return githubRequest(addComment(context))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,
-            {'message': `CLA has not been signed by users [${nonContributors.join(', ')}], added a comment to ${body.repository.url}`}));
+            {'message': `CLA has not been signed by users [${nonContributors.join(', ')}], added a comment to ${context.webhook.pull_request.url}`}));
       }
     })
     .catch((err) => {

@@ -14,11 +14,12 @@ A bunch of things I'd like to do in order to make this an MVP.
   - [x] Make the user whitelist configurable (it's hard-coded in `index.js` at the moment!)
   - [x] Allow users to add a `.clabot` file to their repo to provide configuration (this could fix the above)
   - [x] Automate deployment of the lambda
-  - [ ] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
+  - [x] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
   - [ ] Allow PRs to be re-checked after a user has signed a CLI (perhaps the bot could be 'pinged' via a comment?)
   - [ ] Turn this into a GitHub integration rather than a manually configured webhook
   - [x] Use the GitHub status API so that projects can add pre-merge checks for the CLA
   - [ ] Create a super-awesome website that makes CLAs look fun and cool!
+  - [ ] Add semantic release
 
 ## Development
 

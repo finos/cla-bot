@@ -1,7 +1,6 @@
-/* globals describe it beforeEach expect fail */
-
-const lambda = require('../index');
+/* globals describe it beforeEach afterEach expect fail */
 const NodeRSA = require('node-rsa');
+const mock = require('mock-require');
 
 const noop = () => {};
 
@@ -25,10 +24,14 @@ const mockRequest = ({error, response, body, verifyRequest = noop}) =>
 // mock multiple requests, mapped by URL
 const mockMultiRequest = (config) =>
   (opts, cb) => {
-    if (config[opts.url]) {
-      return mockRequest(config[opts.url])(opts, cb);
+    const url = opts.url +
+      (opts.qs
+        ? '?' + Object.keys(opts.qs).map(k => `${k}=${opts.qs[k]}`).join('=')
+        : '');
+    if (config[url]) {
+      return mockRequest(config[url])(opts, cb);
     } else {
-      fail(`No mock found for request ${opts.url}`);
+      fail(`No mock found for request ${url}`);
     }
   };
 
@@ -88,10 +91,18 @@ describe('lambda function', () => {
     };
   });
 
+  afterEach(() => {
+    mock.stop('request');
+    delete require.cache[require.resolve('../index')];
+    delete require.cache[require.resolve('../requestAsPromise')];
+    delete require.cache[require.resolve('../contributionVerifier')];
+  });
+
   // TODO: Test X-GitHub-Event header is a pull_request type
 
   it('should ignore actions that are not pull requests being opened', (done) => {
     event.body.action = 'label';
+    const lambda = require('../index');
     lambda.handler(event, {}, (err, result) => {
       expect(err).toBeNull();
       expect(result.message).toEqual('ignored action of type label');
@@ -104,10 +115,11 @@ describe('lambda function', () => {
     it('should propagate HTTP request errors', (done) => {
       // create a mal-formed URL
       event.body.repository.url = 'http:://foo.com/user/repo';
+      const lambda = require('../index');
       lambda.handler(event, {}, (err) => {
         expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
         done();
-      }, {key});
+      }, key);
     });
 
     it('should handle HTTP status codes that are not OK (2xx)', (done) => {
@@ -116,11 +128,15 @@ describe('lambda function', () => {
           statusCode: 404
         }
       });
+
+      mock('request', request);
+      const lambda = require('../index');
+
       lambda.handler(event, {},
         (err, result) => {
           expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
-        }, {request, key});
+        }, key);
     });
   });
 
@@ -142,7 +158,11 @@ describe('lambda function', () => {
         'http://foo.com/user/repo/contents/.clabot',
         'http://raw.foo.com/user/repo/contents/.clabot'
       ], 'bot-token'));
-      lambda.handler(event, {}, done, {request, key});
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {}, done, key);
     });
 
     it('should use the clients auth token for labelling and status', (done) => {
@@ -152,7 +172,11 @@ describe('lambda function', () => {
         'http://foo.com/user/repo/issues/2/comments',
         'http://foo.com/user/repo/issues/2/labels'
       ], userToken));
-      lambda.handler(event, {}, done, {request, key});
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {}, done, key);
     });
   });
 
@@ -177,12 +201,16 @@ describe('lambda function', () => {
         ]
       }
     }));
+
+    mock('request', request);
+    const lambda = require('../index');
+
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
         expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
         done();
-      }, {request, key});
+      }, key);
   });
 
   it('should comment on pull requests where a CLA has not been signed', (done) => {
@@ -207,12 +235,15 @@ describe('lambda function', () => {
       }
     }));
 
+    mock('request', request);
+    const lambda = require('../index');
+
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, {request, key});
+      }, key);
   });
 
   it('should report the names of all committers without CLA', (done) => {
@@ -227,12 +258,15 @@ describe('lambda function', () => {
       }
     }));
 
+    mock('request', request);
+    const lambda = require('../index');
+
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, {request, key});
+      }, key);
   });
 
   it('should support fetching of contributor list from a URL', (done) => {
@@ -256,11 +290,59 @@ describe('lambda function', () => {
       }
     }));
 
+    mock('request', request);
+    const lambda = require('../index');
+
     lambda.handler(event, {},
       (err, result) => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, {request, key});
+      }, key);
+  });
+
+  it('should support fetching of contributors via a webhook', (done) => {
+
+    const request = mockMultiRequest(merge(mockConfig, {
+      'http://raw.foo.com/user/repo/contents/.clabot': {
+        body: {
+          contributorWebhook: 'http://bar.com/contributor',
+          token: key.encrypt(userToken, 'base64')
+        }
+      },
+      'http://bar.com/contributor?checkContributor=foo': {
+        body: {
+          isContributor: false
+        }
+      },
+      'http://bar.com/contributor?checkContributor=bob': {
+        body: {
+          isContributor: true
+        }
+      },
+      'http://bar.com/contributor?checkContributor=ColinEberhardt': {
+        body: {
+          isContributor: false
+        }
+      },
+      'http://foo.com/user/repo/pulls/2/commits': {
+        body: [
+          // three commits, two from a user which is not a contributor
+          { author: { login: 'foo' } },
+          { author: { login: 'bob' } },
+          { author: { login: 'ColinEberhardt' } }
+        ]
+      }
+    }));
+
+    mock('request', request);
+    const lambda = require('../index');
+
+    lambda.handler(event, {},
+      (err, result) => {
+        expect(err).toBeNull();
+        expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
+        done();
+      }, key);
   });
 });

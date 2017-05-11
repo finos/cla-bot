@@ -1,73 +1,14 @@
 const NodeRSA = require('node-rsa');
 const fs = require('fs');
+const requestp = require('./requestAsPromise');
+const contributionVerifier = require('./contributionVerifier');
+const {getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
-const getReadmeUrl = ({webhook}) => ({
-  url: webhook.repository.url + '/contents/.clabot',
-  method: 'GET'
-});
+exports.handler = ({ body }, lambdaContext, callback, privateKey) => {
 
-const getReadmeContents = (body) => ({
-  url: body.download_url,
-  method: 'GET'
-});
-
-const addLabel = ({webhook, config}) => ({
-  url: webhook.pull_request.issue_url + '/labels',
-  body: [config.label]
-});
-
-const getCommits = ({webhook}) => ({
-  url: webhook.pull_request.url + '/commits',
-  method: 'GET'
-});
-
-const setStatus = ({webhook}, state) => ({
-  url: webhook.repository.url + '/statuses/' + webhook.pull_request.head.sha,
-  body: {
-    state,
-    context: 'verification/cla-signed'
-  }
-});
-
-const addComment = ({webhook, config}) => ({
-  url: webhook.pull_request.issue_url + '/comments',
-  body: {
-    body: config.message
-  }
-});
-
-const requestAsPromise = (request) => (opts) => new Promise((resolve, reject) => {
-  console.log('API Request', opts.url, opts.body || {});
-  request(opts, (error, response, body) => {
-    if (error) {
-      reject(error.toString());
-    } else if (response && response.statusCode && !response.statusCode.toString().startsWith('2')) {
-      reject(new Error(`API request ${opts.url} failed with status ${response.statusCode}`));
-    } else {
-      resolve(body);
-    }
-  });
-});
-
-const verifyContributors = (committers, {config}, request) => {
-  if (config.contributors) {
-    const isContributor = (user) => config.contributors.indexOf(user) !== -1;
-    return Promise.resolve(committers.filter(c => !isContributor(c)));
-  } else if (config.contributorListUrl) {
-    return requestAsPromise(request)({
-      url: config.contributorListUrl,
-      json: true
-    })
-    .then((contributors) => {
-      const isContributor = (user) => contributors.indexOf(user) !== -1;
-      return committers.filter(c => !isContributor(c));
-    });
-  }
-};
-
-exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
+  privateKey = privateKey || new NodeRSA(fs.readFileSync('clabotkey.pem'));
 
   const loggingCallback = (err, message) => {
     console.log('callback', err, message);
@@ -84,14 +25,8 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     webhook: body
   };
 
-  // for test purposes we pass in mocked external dependencies
-  const request = config.request || require('request');
-  const privateKey = config.key || new NodeRSA(fs.readFileSync('clabotkey.pem'));
-
-  // adapts the request API to provide generic handling of HTTP / transport errors and
-  // error responses from the GitHub API.
   const githubRequest = (opts, token = clabotToken) =>
-    requestAsPromise(request)(Object.assign({}, {
+    requestp(Object.assign({}, {
       json: true,
       headers: {
         'Authorization': 'token ' + token,
@@ -111,7 +46,8 @@ exports.handler = ({ body }, lambdaContext, callback, config = {}) => {
     })
     .then((commits) => {
       const committers = commits.map(c => c.author.login);
-      return verifyContributors(committers, context, request);
+      const verifier = contributionVerifier(context.config);
+      return verifier(committers);
     })
     .then((nonContributors) => {
       if (nonContributors.length === 0) {

@@ -1,14 +1,12 @@
-const NodeRSA = require('node-rsa');
 const fs = require('fs');
 const requestp = require('./requestAsPromise');
 const contributionVerifier = require('./contributionVerifier');
+const installationToken = require('./installationToken');
 const {getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
-exports.handler = ({ body }, lambdaContext, callback, privateKey) => {
-
-  privateKey = privateKey || new NodeRSA(fs.readFileSync('clabotkey.pem'));
+exports.handler = ({ body }, lambdaContext, callback) => {
 
   const loggingCallback = (err, message) => {
     console.log('callback', err, message);
@@ -40,8 +38,11 @@ exports.handler = ({ body }, lambdaContext, callback, privateKey) => {
   githubRequest(getReadmeUrl(context))
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
-      context.userToken = privateKey.decrypt(config.token, 'utf8');
       context.config = Object.assign({}, defaultConfig, config);
+      return installationToken(context.webhook.installation.id);
+    })
+    .then(token => {
+      context.userToken = token;
       return githubRequest(getCommits(context), context.userToken);
     })
     .then((commits) => {

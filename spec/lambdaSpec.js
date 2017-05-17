@@ -1,5 +1,4 @@
 /* globals describe it beforeEach afterEach expect fail */
-const NodeRSA = require('node-rsa');
 const mock = require('mock-require');
 
 const noop = () => {};
@@ -8,8 +7,7 @@ const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
 
 const merge = (a, b) => Object.assign({}, a, b);
 
-const key = new NodeRSA({b: 512});
-const userToken = 'this-is-a-test';
+const installationToken = 'this-is-a-test';
 
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
@@ -57,6 +55,9 @@ describe('lambda function', () => {
         },
         repository: {
           url: 'http://foo.com/user/repo'
+        },
+        installation: {
+          id: 1000
         }
       }
     };
@@ -72,8 +73,13 @@ describe('lambda function', () => {
       // the next is to download the .clabot config file
       'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
-          contributors: ['ColinEberhardt'],
-          token: key.encrypt(userToken, 'base64')
+          contributors: ['ColinEberhardt']
+        }
+      },
+      // next use the integration API to obtain an access token
+      'https://api.github.com/installations/1000/access_tokens': {
+        body: {
+          token: installationToken
         }
       },
       // the next is to download the commits for the PR
@@ -96,6 +102,7 @@ describe('lambda function', () => {
     delete require.cache[require.resolve('../index')];
     delete require.cache[require.resolve('../requestAsPromise')];
     delete require.cache[require.resolve('../contributionVerifier')];
+    delete require.cache[require.resolve('../installationToken')];
   });
 
   // TODO: Test X-GitHub-Event header is a pull_request type
@@ -119,7 +126,7 @@ describe('lambda function', () => {
       lambda.handler(event, {}, (err) => {
         expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
         done();
-      }, key);
+      });
     });
 
     it('should handle HTTP status codes that are not OK (2xx)', (done) => {
@@ -136,7 +143,7 @@ describe('lambda function', () => {
         (err, result) => {
           expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
-        }, key);
+        });
     });
   });
 
@@ -162,7 +169,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../index');
 
-      lambda.handler(event, {}, done, key);
+      lambda.handler(event, {}, done);
     });
 
     it('should use the clients auth token for labelling and status', (done) => {
@@ -171,12 +178,12 @@ describe('lambda function', () => {
         'http://foo.com/user/repo/pulls/2/commits',
         'http://foo.com/user/repo/issues/2/comments',
         'http://foo.com/user/repo/issues/2/labels'
-      ], userToken));
+      ], installationToken));
 
       mock('request', request);
       const lambda = require('../index');
 
-      lambda.handler(event, {}, done, key);
+      lambda.handler(event, {}, done);
     });
   });
 
@@ -210,7 +217,7 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
         done();
-      }, key);
+      });
   });
 
   it('should comment on pull requests where a CLA has not been signed', (done) => {
@@ -243,7 +250,7 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, key);
+      });
   });
 
   it('should report the names of all committers without CLA', (done) => {
@@ -266,15 +273,14 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, key);
+      });
   });
 
   it('should support fetching of contributor list from a URL', (done) => {
     const request = mockMultiRequest(merge(mockConfig, {
       'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
-          contributorListUrl: 'http://bar.com/contributors.txt',
-          token: key.encrypt(userToken, 'base64')
+          contributorListUrl: 'http://bar.com/contributors.txt'
         }
       },
       'http://bar.com/contributors.txt': {
@@ -298,7 +304,7 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, key);
+      });
   });
 
   it('should support fetching of contributors via a webhook', (done) => {
@@ -306,8 +312,7 @@ describe('lambda function', () => {
     const request = mockMultiRequest(merge(mockConfig, {
       'http://raw.foo.com/user/repo/contents/.clabot': {
         body: {
-          contributorWebhook: 'http://bar.com/contributor',
-          token: key.encrypt(userToken, 'base64')
+          contributorWebhook: 'http://bar.com/contributor'
         }
       },
       'http://bar.com/contributor?checkContributor=foo': {
@@ -343,6 +348,6 @@ describe('lambda function', () => {
         expect(err).toBeNull();
         expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
         done();
-      }, key);
+      });
   });
 });

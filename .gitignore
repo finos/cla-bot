@@ -4,5 +4,6 @@ build
 # don't commit the file that simulates the AWS environment variables
 deploy.env
 
-# I don't want to commit the private RSA key for my bot!
+# I don't want to commit the private RSA keys for my bot!
 clabotkey.pem
+clabot-integration-key.pem

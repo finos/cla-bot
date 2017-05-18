@@ -13,6 +13,12 @@ exports.addLabel = ({webhook, config}) => ({
   body: [config.label]
 });
 
+exports.deleteLabel = ({webhook, config}) => ({
+  url: webhook.pull_request.issue_url + '/labels',
+  body: [config.label],
+  method: 'DELETE'
+});
+
 exports.getCommits = ({webhook}) => ({
   url: webhook.pull_request.url + '/commits',
   method: 'GET'

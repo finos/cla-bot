@@ -187,167 +187,247 @@ describe('lambda function', () => {
     });
   });
 
-  it('should label pull requests from users with a signed CLA', (done) => {
-    const request = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/user/repo/statuses/1234': {
-        verifyRequest: (opts) => {
-          expect(opts.body.state).toEqual('success');
-          expect(opts.body.context).toEqual('verification/cla-signed');
+  describe('pull requests opened', () => {
+    it('should label and set status on pull requests from users with a signed CLA', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('success');
+            expect(opts.body.context).toEqual('verification/cla-signed');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/labels': {
+          verifyRequest: (opts) => {
+            expect(opts.body).toEqual(['cla-signed']);
+          }
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // two commits, both from contributors
+            { author: { login: 'ColinEberhardt' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://foo.com/user/repo/issues/2/labels': {
-        verifyRequest: (opts) => {
-          expect(opts.body).toEqual(['cla-signed']);
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
+    it('should comment ans set status on pull requests where a CLA has not been signed', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('failure');
+            expect(opts.body.context).toEqual('verification/cla-signed');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('Thank you for your pull request');
+          }
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // two commits, one from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://foo.com/user/repo/pulls/2/commits': {
-        body: [
-          // two commits, both from contributors
-          { author: { login: 'ColinEberhardt' } },
-          { author: { login: 'ColinEberhardt' } }
-        ]
-      }
-    }));
+      }));
 
-    mock('request', request);
-    const lambda = require('../index');
+      mock('request', request);
+      const lambda = require('../index');
 
-    lambda.handler(event, {},
-      (err, result) => {
-        expect(err).toBeNull();
-        expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
-        done();
-      });
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
+    it('should report the names of all committers without CLA', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
   });
 
-  it('should comment on pull requests where a CLA has not been signed', (done) => {
-    const request = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/user/repo/statuses/1234': {
-        verifyRequest: (opts) => {
-          expect(opts.body.state).toEqual('failure');
-          expect(opts.body.context).toEqual('verification/cla-signed');
+  describe('contributor check configuration', () => {
+    it('should support fetching of contributor list from a URL', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          body: {
+            contributorListUrl: 'http://bar.com/contributors.txt'
+          }
+        },
+        'http://bar.com/contributors.txt': {
+          body: ['bob']
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://foo.com/user/repo/issues/2/comments': {
-        verifyRequest: (opts) => {
-          expect(opts.body.body).toContain('Thank you for your pull request');
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
+    it('should support fetching of contributors via a webhook', (done) => {
+
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          body: {
+            contributorWebhook: 'http://bar.com/contributor'
+          }
+        },
+        'http://bar.com/contributor?checkContributor=foo': {
+          body: {
+            isContributor: false
+          }
+        },
+        'http://bar.com/contributor?checkContributor=bob': {
+          body: {
+            isContributor: true
+          }
+        },
+        'http://bar.com/contributor?checkContributor=ColinEberhardt': {
+          body: {
+            isContributor: false
+          }
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://foo.com/user/repo/pulls/2/commits': {
-        body: [
-          // two commits, one from a user which is not a contributor
-          { author: { login: 'foo' } },
-          { author: { login: 'ColinEberhardt' } }
-        ]
-      }
-    }));
+      }));
 
-    mock('request', request);
-    const lambda = require('../index');
+      mock('request', request);
+      const lambda = require('../index');
 
-    lambda.handler(event, {},
-      (err, result) => {
-        expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
-        done();
-      });
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
   });
 
-  it('should report the names of all committers without CLA', (done) => {
-    const request = mockMultiRequest(merge(mockConfig, {
-      'http://foo.com/user/repo/pulls/2/commits': {
-        body: [
-          // three commits, two from a user which is not a contributor
-          { author: { login: 'foo' } },
-          { author: { login: 'bob' } },
-          { author: { login: 'ColinEberhardt' } }
-        ]
-      }
-    }));
-
-    mock('request', request);
-    const lambda = require('../index');
-
-    lambda.handler(event, {},
-      (err, result) => {
-        expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo, bob], added a comment to http://foo.com/user/repo/pulls/2');
-        done();
-      });
-  });
-
-  it('should support fetching of contributor list from a URL', (done) => {
-    const request = mockMultiRequest(merge(mockConfig, {
-      'http://raw.foo.com/user/repo/contents/.clabot': {
-        body: {
-          contributorListUrl: 'http://bar.com/contributors.txt'
+  describe('pull requests updated', () => {
+    it('should label and add status check on pull requests and update stats for users with a signed CLA', (done) => {
+      event.body.action = 'synchronize';
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('success');
+            expect(opts.body.context).toEqual('verification/cla-signed');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/labels': {
+          verifyRequest: (opts) => {
+            expect(opts.body).toEqual(['cla-signed']);
+          }
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // two commits, both from contributors
+            { author: { login: 'ColinEberhardt' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://bar.com/contributors.txt': {
-        body: ['bob']
-      },
-      'http://foo.com/user/repo/pulls/2/commits': {
-        body: [
-          // three commits, two from a user which is not a contributor
-          { author: { login: 'foo' } },
-          { author: { login: 'bob' } },
-          { author: { login: 'ColinEberhardt' } }
-        ]
-      }
-    }));
+      }));
 
-    mock('request', request);
-    const lambda = require('../index');
+      mock('request', request);
+      const lambda = require('../index');
 
-    lambda.handler(event, {},
-      (err, result) => {
-        expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
-        done();
-      });
-  });
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
 
-  it('should support fetching of contributors via a webhook', (done) => {
-
-    const request = mockMultiRequest(merge(mockConfig, {
-      'http://raw.foo.com/user/repo/contents/.clabot': {
-        body: {
-          contributorWebhook: 'http://bar.com/contributor'
+    it('should comment and remove label / status check on pull requests where a CLA has not been signed', (done) => {
+      event.body.action = 'synchronize';
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('failure');
+            expect(opts.body.context).toEqual('verification/cla-signed');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/labels': {
+          verifyRequest: (opts) => {
+            expect(opts.body).toEqual(['cla-signed']);
+            expect(opts.method).toEqual('DELETE');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('Thank you for your pull request');
+          }
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // two commits, one from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
         }
-      },
-      'http://bar.com/contributor?checkContributor=foo': {
-        body: {
-          isContributor: false
-        }
-      },
-      'http://bar.com/contributor?checkContributor=bob': {
-        body: {
-          isContributor: true
-        }
-      },
-      'http://bar.com/contributor?checkContributor=ColinEberhardt': {
-        body: {
-          isContributor: false
-        }
-      },
-      'http://foo.com/user/repo/pulls/2/commits': {
-        body: [
-          // three commits, two from a user which is not a contributor
-          { author: { login: 'foo' } },
-          { author: { login: 'bob' } },
-          { author: { login: 'ColinEberhardt' } }
-        ]
-      }
-    }));
+      }));
 
-    mock('request', request);
-    const lambda = require('../index');
+      mock('request', request);
+      const lambda = require('../index');
 
-    lambda.handler(event, {},
-      (err, result) => {
-        expect(err).toBeNull();
-        expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
-        done();
-      });
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
   });
 });

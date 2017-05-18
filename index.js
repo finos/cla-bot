@@ -2,9 +2,12 @@ const fs = require('fs');
 const requestp = require('./requestAsPromise');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const {getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment} = require('./githubApi');
+const {getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
+
+const validAction = (action) =>
+  ['opened', 'synchronize'].indexOf(action) !== -1;
 
 exports.handler = ({ body }, lambdaContext, callback) => {
 
@@ -13,7 +16,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     callback(err, message);
   };
 
-  if (body.action !== 'opened') {
+  if (!validAction(body.action)) {
     loggingCallback(null, {'message': 'ignored action of type ' + body.action});
     return;
   }
@@ -57,6 +60,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
       } else {
         return githubRequest(addComment(context))
+          .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,
             {'message': `CLA has not been signed by users [${nonContributors.join(', ')}], added a comment to ${context.webhook.pull_request.url}`}));

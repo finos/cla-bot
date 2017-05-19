@@ -4,7 +4,7 @@ node_js:
 
 before_install:
 - openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv
-  -in clabot-integration-key.pem.enc -out clabot-integration-key.pem -d
+  -in clabot-dev-integration-key.pem.enc -out clabot-dev-integration-key.pem -d
 
 deploy:
   - provider: lambda

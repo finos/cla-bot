@@ -5,5 +5,4 @@ build
 deploy.env
 
 # I don't want to commit the private RSA keys for my bot!
-clabotkey.pem
-clabot-integration-key.pem
+clabot-dev-integration-key.pem

@@ -9,6 +9,9 @@ const merge = (a, b) => Object.assign({}, a, b);
 
 const installationToken = 'this-is-a-test';
 
+process.env.INTEGRATION_KEY = 'clabot-dev-integration-key.pem';
+process.env.INTEGRATION_ID = 2208;
+
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
 // request options

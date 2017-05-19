@@ -1,9 +1,10 @@
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const requestp = require('./requestAsPromise');
-const integrationId = 2208;
 
-const cert = fs.readFileSync('clabot-integration-key.pem');
+const integrationId = process.env.INTEGRATION_ID;
+
+const cert = fs.readFileSync(process.env.INTEGRATION_KEY);
 const token = jwt.sign({ iss: integrationId },
   cert, {
     algorithm: 'RS256',

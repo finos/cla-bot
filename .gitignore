@@ -5,5 +5,7 @@ build
 deploy.env
 
 # I don't want to commit the private RSA keys for my bot!
+# see: https://docs.travis-ci.com/user/encrypting-files/#Encrypting-multiple-files
 clabot-dev-integration-key.pem
 clabot-integration-key.pem
+secrets.tar

@@ -42,7 +42,12 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
       context.config = Object.assign({}, defaultConfig, config);
-      return installationToken(context.webhook.installation.id);
+      // if we are running as an integration, obtain the required integration token, otherwise
+      if (process.env.INTEGRATION_ENABLED && process.env.INTEGRATION_ENABLED === 'true') {
+        return installationToken(context.webhook.installation.id);
+      } else {
+        return clabotToken;
+      }
     })
     .then(token => {
       context.userToken = token;

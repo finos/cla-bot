@@ -1,35 +1,32 @@
 language: node_js
 node_js:
 - '6'
-
 before_install:
 - openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv
-  -in clabot-integration-key.pem.enc -out clabot-integration-key.pem -d
-- openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv
-  -in clabot-dev-integration-key.pem.enc -out clabot-dev-integration-key.pem -d
-
+  -in secrets.tar.enc -out secrets.tar -d
+- tar xvf secrets.tar
 deploy:
-  - provider: lambda
-    function_name: clabot-prod
-    region: us-east-2
-    role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
-    runtime: nodejs6.10
-    handler_name: handler
-    access_key_id: AKIAJKAOSYDLCXNH2NYQ
-    timeout: 15
-    on:
-      branch: master
-    secret_access_key:
-      secure: KLsuEBCFPT+Wxirj+mWt6a2/vkuh816a32orWA1rpPBD754PncpajWO31DmoVGzWc/OYuAdPHnEENCwlxGnHnIhe9rg09+px5KdXjd8hrpR0NjNRTLdqj5dTMKLj+viokW7du7vxrUlko5qp+jtIdzd4UZSzenamYG0vL4pq9GmJVYdaayYA2ALFkQMvu7QIKmrEep8ezdx4M33Nw5sz9S+k/EhO09ycKEhuXGvMGzFfYf0u652nNdLXv9Hk60tfnKZoSBbHI5i4T2AbULCyluslaa6FEQF5GAU69kfsgA8j96lKOF1xI/3buDJ6TpNkOrU7W6s2zOVW5aV9deaf6OJ8SVLX3s83NbF4xcMniAfbAXJ5gyY1Hdv7iq89e7PL6mPvFg+D9P16hZeKe7Pw+oUMIo1HZ8xgKCaITcmAS7DGWOKh8OPjBJb6ZxRjrkUNrsneqkcCg+JO6lBDoGy6UZkcRqoJPVOjkk2PiUbElVLLJZVAujyon9JaMWABZQw9JYvPSxpNTY1Sq6ppWfPFs4Cnghyw+qqiYxcYAF+epomwOxsMmn/Nm5A+nyYNlE1GaoWE9+gcvvcmOw347uF9TxTWoV68A5DOdNmaS0RrQHzfBbMqbZqkO+xgOraz5SkdtkoSZFC451kN2YktnkcUZtYRU4vAQ5EONbq4Zcv2Trc=
-  - provider: lambda
-    function_name: clabot-dev
-    region: us-east-2
-    role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
-    runtime: nodejs6.10
-    handler_name: handler
-    access_key_id: AKIAJKAOSYDLCXNH2NYQ
-    timeout: 15
-    on:
-      branch: develop
-    secret_access_key:
-      secure: KLsuEBCFPT+Wxirj+mWt6a2/vkuh816a32orWA1rpPBD754PncpajWO31DmoVGzWc/OYuAdPHnEENCwlxGnHnIhe9rg09+px5KdXjd8hrpR0NjNRTLdqj5dTMKLj+viokW7du7vxrUlko5qp+jtIdzd4UZSzenamYG0vL4pq9GmJVYdaayYA2ALFkQMvu7QIKmrEep8ezdx4M33Nw5sz9S+k/EhO09ycKEhuXGvMGzFfYf0u652nNdLXv9Hk60tfnKZoSBbHI5i4T2AbULCyluslaa6FEQF5GAU69kfsgA8j96lKOF1xI/3buDJ6TpNkOrU7W6s2zOVW5aV9deaf6OJ8SVLX3s83NbF4xcMniAfbAXJ5gyY1Hdv7iq89e7PL6mPvFg+D9P16hZeKe7Pw+oUMIo1HZ8xgKCaITcmAS7DGWOKh8OPjBJb6ZxRjrkUNrsneqkcCg+JO6lBDoGy6UZkcRqoJPVOjkk2PiUbElVLLJZVAujyon9JaMWABZQw9JYvPSxpNTY1Sq6ppWfPFs4Cnghyw+qqiYxcYAF+epomwOxsMmn/Nm5A+nyYNlE1GaoWE9+gcvvcmOw347uF9TxTWoV68A5DOdNmaS0RrQHzfBbMqbZqkO+xgOraz5SkdtkoSZFC451kN2YktnkcUZtYRU4vAQ5EONbq4Zcv2Trc=
+- provider: lambda
+  function_name: clabot-prod
+  region: us-east-2
+  role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+  runtime: nodejs6.10
+  handler_name: handler
+  access_key_id: AKIAJD3WVQTATNQACA6Q
+  timeout: 15
+  on:
+    branch: master
+  secret_access_key:
+    secure: cZeI2nQCZqll2S3fOTlpWJzTLhYT/DxveLnTCttCeYaZAVBr8i7KkkHxu1mxF03zopt2CNaEjVBCwp/Ixa4371Rllh4jhvq22/K7u+yxVzMFrwj14w3zW5QE+ljdLYvOrDXE6SgVSg9e+swlkgTxX6PZFf5iCb14Z1z2zYiVU2dYR7vvUKWVam5m8vv87z9AgSH3QG6y3zH+Zv5rPVmW/TD2DUBhzCTW1jopuSmxv5p8VVAuk8ga5xm8JEmMhiS2zcJAhxsmg4vb0VqDTZxu3oqRR0x09H+xJvoEkIrJ6e9FHseWLLqMb8ZXvfTehg2msBDBVHphBaoZYotLXcrI9R+pOcUzcVSut0JGGsNW8dYCCeiSdVOjGy304HIBal9LmCw0r7u51brceYzduY3lHuPlOwLECjELZxg72MTJwDRjBjNNKPrifuFQKz1MUBm2HMPwLpokQy74+TtTLxvVAHzjt3HBkFbZdYoMa8toRRh9/2HseOrPucNgIGYn8qtOcIxnqd9x8yBtu/XrXo1F3xCK60R52PQX+W4aVVTTa/FHb5SJIkn4dBWgi5dETOwtLmaNypL73BiC5hPTuNjNoWzdezhc/aFGijdWzbeitz0xInznI0FxqhzRl5TYbOWhI8IbT9vT/7UBCxyUP9c5CN/steTvot9yfCXJfFjGAFQ=
+- provider: lambda
+  function_name: clabot-dev
+  region: us-east-2
+  role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+  runtime: nodejs6.10
+  handler_name: handler
+  access_key_id: AKIAJD3WVQTATNQACA6Q
+  timeout: 15
+  on:
+    branch: develop
+  secret_access_key:
+    secure: cZeI2nQCZqll2S3fOTlpWJzTLhYT/DxveLnTCttCeYaZAVBr8i7KkkHxu1mxF03zopt2CNaEjVBCwp/Ixa4371Rllh4jhvq22/K7u+yxVzMFrwj14w3zW5QE+ljdLYvOrDXE6SgVSg9e+swlkgTxX6PZFf5iCb14Z1z2zYiVU2dYR7vvUKWVam5m8vv87z9AgSH3QG6y3zH+Zv5rPVmW/TD2DUBhzCTW1jopuSmxv5p8VVAuk8ga5xm8JEmMhiS2zcJAhxsmg4vb0VqDTZxu3oqRR0x09H+xJvoEkIrJ6e9FHseWLLqMb8ZXvfTehg2msBDBVHphBaoZYotLXcrI9R+pOcUzcVSut0JGGsNW8dYCCeiSdVOjGy304HIBal9LmCw0r7u51brceYzduY3lHuPlOwLECjELZxg72MTJwDRjBjNNKPrifuFQKz1MUBm2HMPwLpokQy74+TtTLxvVAHzjt3HBkFbZdYoMa8toRRh9/2HseOrPucNgIGYn8qtOcIxnqd9x8yBtu/XrXo1F3xCK60R52PQX+W4aVVTTa/FHb5SJIkn4dBWgi5dETOwtLmaNypL73BiC5hPTuNjNoWzdezhc/aFGijdWzbeitz0xInznI0FxqhzRl5TYbOWhI8IbT9vT/7UBCxyUP9c5CN/steTvot9yfCXJfFjGAFQ=

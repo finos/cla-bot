@@ -4,14 +4,15 @@ const requestp = require('./requestAsPromise');
 
 const integrationId = process.env.INTEGRATION_ID;
 
-const cert = (process.env.INTEGRATION_KEY != null) ? fs.readFileSync(process.env.INTEGRATION_KEY) : "";
-const token = (process.env.INTEGRATION_KEY != null) ? jwt.sign({ iss: integrationId },
-  cert, {
-    algorithm: 'RS256',
-    expiresIn: '10m'
-  }) : null;
+module.exports = (installationId) => {
+  const cert = fs.readFileSync(process.env.INTEGRATION_KEY);
+  const token = jwt.sign({ iss: integrationId },
+    cert, {
+      algorithm: 'RS256',
+      expiresIn: '10m'
+    });
 
-module.exports = (installationId) => requestp({
+  return requestp({
   url: `https://api.github.com/installations/${installationId}/access_tokens`,
   json: true,
   headers: {
@@ -22,3 +23,4 @@ module.exports = (installationId) => requestp({
   method: 'POST'
 })
 .then(({token}) => token);
+};

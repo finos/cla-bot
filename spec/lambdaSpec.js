@@ -283,6 +283,37 @@ describe('lambda function', () => {
   });
 
   describe('contributor check configuration', () => {
+    it('should support fetching of contributor list from a Github API  URL', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          body: {
+            contributorListGithubUrl: 'https://api.github.com/repos/foo/bar/contents/.contributors'
+          }
+        },
+        'https://api.github.com/repos/foo/bar/contents/.contributors': {
+          body: ['bob']
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
     it('should support fetching of contributor list from a URL', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://raw.foo.com/user/repo/contents/.clabot': {

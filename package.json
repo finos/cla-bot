@@ -13,7 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "jsonwebtoken": "^7.4.0",
-    "request": "^2.81.0"
+    "request": "^2.81.0",
+    "parse-github-url": "^0.3.2"
   },
   "devDependencies": {
     "eslint": "^3.19.0",

@@ -1,3 +1,16 @@
+const getOrgConfigUrl = (repositoryUrl) => {
+  var gh = require('parse-github-url');
+  ghData = gh(repositoryUrl);
+  ghUrl = "https://" + ghData.host + "/repos/" + ghData.owner + "/clabot-config/contents/.clabot";
+  console.log("clabot org URL - "+ghUrl);
+  return ghUrl;
+};
+
+exports.getOrgConfig = ({webhook}) => ({
+  url: getOrgConfigUrl(webhook.repository.url),
+  method: 'GET'
+});
+
 exports.getReadmeUrl = ({webhook}) => ({
   url: webhook.repository.url + '/contents/.clabot',
   method: 'GET'

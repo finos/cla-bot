@@ -2,7 +2,7 @@ const fs = require('fs');
 const requestp = require('./requestAsPromise');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const {getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
+const {getOrgConfig, getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
@@ -39,6 +39,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
   githubRequest(getReadmeUrl(context))
+    .then(body => {
+      if (defaultConfig.forceOrgConfig || !body.name || body.name == "") {
+        console.log("Fetching .clabot from Github organisation project");
+        return githubRequest(getOrgConfig(context));
+      } else {
+        return body;
+      }
+      return body;
+    })
     .then(body => githubRequest(getReadmeContents(body)))
     .then(config => {
       context.config = Object.assign({}, defaultConfig, config);

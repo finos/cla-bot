@@ -2,7 +2,7 @@ const fs = require('fs');
 const requestp = require('./requestAsPromise');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const {getOrgConfig, getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
+const {githubRequest, getOrgConfig, getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
@@ -26,29 +26,19 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     webhook: body
   };
 
-  const githubRequest = (opts, token = clabotToken) =>
-    requestp(Object.assign({}, {
-      json: true,
-      headers: {
-        'Authorization': 'token ' + token,
-        'User-Agent': 'github-cla-bot'
-      },
-      method: 'POST'
-    }, opts));
-
   console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
-  githubRequest(getReadmeUrl(context))
+  githubRequest(getOrgConfig(context),clabotToken)
     .then(body => {
-      if (defaultConfig.forceOrgConfig || !body.name || body.name == "") {
-        console.log("Fetching .clabot from Github organisation project");
-        return githubRequest(getOrgConfig(context));
+      if (!body.name || body.name == "") {
+        console.log("Couldn't fetch .clabot from Github organisation project; trying at project level");
+        return githubRequest(getReadmeUrl(context),clabotToken);
       } else {
         return body;
       }
       return body;
     })
-    .then(body => githubRequest(getReadmeContents(body)))
+    .then(body => githubRequest(getReadmeContents(body),clabotToken))
     .then(config => {
       context.config = Object.assign({}, defaultConfig, config);
       // if we are running as an integration, obtain the required integration token, otherwise
@@ -73,7 +63,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
       } else {
-        return githubRequest(addComment(context))
+        return githubRequest(addComment(context),clabotToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,

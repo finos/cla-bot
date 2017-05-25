@@ -1,3 +1,5 @@
+const requestp = require('./requestAsPromise');
+
 const getOrgConfigUrl = (repositoryUrl) => {
   var gh = require('parse-github-url');
   ghData = gh(repositoryUrl);
@@ -5,6 +7,17 @@ const getOrgConfigUrl = (repositoryUrl) => {
   console.log("clabot org URL - "+ghUrl);
   return ghUrl;
 };
+
+exports.githubRequest = (opts, token) =>
+    requestp(Object.assign({}, {
+      json: true,
+      headers: {
+        'Authorization': 'token ' + token,
+        'User-Agent': 'github-cla-bot'
+      },
+      method: 'POST'
+    }, opts));
+
 
 exports.getOrgConfig = ({webhook}) => ({
   url: getOrgConfigUrl(webhook.repository.url),

@@ -1,8 +1,19 @@
 const requestp = require('./requestAsPromise');
+const {githubRequest} = require('./githubApi');
+
+const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
 
 const contributorArrayVerifier = (contributors) =>
   (committers) =>
     Promise.resolve(committers.filter(c => contributors.indexOf(c) === -1));
+
+const configFileFromGithubUrlVerifier = (contributorListGithubUrl) =>
+  (committers) =>
+    githubRequest({
+      url: contributorListGithubUrl,
+      method: 'GET'
+    },clabotToken)
+    .then((contributors) => contributorArrayVerifier(contributors)(committers));
 
 const configFileFromUrlVerifier = (contributorListUrl) =>
   (committers) =>
@@ -35,6 +46,8 @@ const webhookVerifier = (webhookUrl) =>
 module.exports = (config) => {
   if (config.contributors) {
     return contributorArrayVerifier(config.contributors);
+  } else if (config.contributorListGithubUrl) {
+    return configFileFromUrlVerifier(config.contributorListGithubUrl);
   } else if (config.contributorListUrl) {
     return configFileFromUrlVerifier(config.contributorListUrl);
   } else if (config.contributorWebhook) {

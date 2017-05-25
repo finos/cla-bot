@@ -314,7 +314,6 @@ describe('lambda function', () => {
         });
     });
 
-
     it('should support fetching of contributor list from a URL', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://raw.foo.com/user/repo/contents/.clabot': {

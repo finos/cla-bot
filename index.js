@@ -33,8 +33,6 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (!body.name || body.name == "") {
         console.log("Couldn't fetch .clabot from Github organisation project; trying at project level");
         return githubRequest(getReadmeUrl(context),clabotToken);
-      } else {
-        return body;
       }
       return body;
     })

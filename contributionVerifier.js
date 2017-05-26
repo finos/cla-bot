@@ -8,14 +8,12 @@ const contributorArrayVerifier = (contributors) =>
     Promise.resolve(committers.filter(c => contributors.indexOf(c) === -1));
 
 const configFileFromGithubUrlVerifier = (contributorListGithubUrl) =>
-  (committers) => {
-    return githubRequest({
+  (committers) => githubRequest({
       url: contributorListGithubUrl,
       method: 'GET'
     },clabotToken)
     .then((body) => githubRequest(getReadmeContents(body),clabotToken))
     .then((contributors) => contributorArrayVerifier(contributors)(committers));
-  };
 
 const configFileFromUrlVerifier = (contributorListUrl) =>
   (committers) =>

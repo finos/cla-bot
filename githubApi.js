@@ -1,10 +1,9 @@
 const requestp = require('./requestAsPromise');
+const gh = require('parse-github-url');
 
-const getOrgConfigUrl = (repositoryUrl) => {
-  var gh = require('parse-github-url');
+const getOrgConfigUrl = (repositoryUrl) => {  
   ghData = gh(repositoryUrl);
   ghUrl = "https://" + ghData.host + "/repos/" + ghData.owner + "/clabot-config/contents/.clabot";
-  console.log("clabot org URL - "+ghUrl);
   return ghUrl;
 };
 

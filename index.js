@@ -1,7 +1,7 @@
 const fs = require('fs');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const {githubRequest, getOrgConfig, getReadmeUrl, getReadmeContents, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
+const {githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
@@ -35,7 +35,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
       return body;
     })
-    .then(body => githubRequest(getReadmeContents(body), clabotToken))
+    .then(body => githubRequest(getFile(body), clabotToken))
     .then(config => {
       context.config = Object.assign({}, defaultConfig, config);
       // if we are running as an integration, obtain the required integration token, otherwise

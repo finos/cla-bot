@@ -27,7 +27,7 @@ exports.getReadmeUrl = ({webhook}) => ({
   method: 'GET'
 });
 
-exports.getReadmeContents = (body) => ({
+exports.getFile = (body) => ({
   url: body.download_url,
   method: 'GET'
 });

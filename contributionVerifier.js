@@ -1,5 +1,5 @@
 const requestp = require('./requestAsPromise');
-const {githubRequest} = require('./githubApi');
+const {githubRequest, getReadmeContents} = require('./githubApi');
 
 const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
 
@@ -13,6 +13,7 @@ const configFileFromGithubUrlVerifier = (contributorListGithubUrl) =>
       url: contributorListGithubUrl,
       method: 'GET'
     }, clabotToken)
+    .then((body) => githubRequest(getReadmeContents(body), clabotToken))
     .then((contributors) => contributorArrayVerifier(contributors)(committers));
 
 const configFileFromUrlVerifier = (contributorListUrl) =>

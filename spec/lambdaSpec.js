@@ -71,6 +71,7 @@ describe('lambda function', () => {
     mockConfig = {
       // the bot first checks for an org-level config file
       'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+        // it returns an empty body, as a result a repo-local config file is used
         body: {}
       },
       // next step is to make a request for the download URL for the cla config
@@ -297,6 +298,11 @@ describe('lambda function', () => {
           }
         },
         'https://api.github.com/repos/foo/bar/contents/.contributors': {
+          body: {
+            download_url: 'http://raw.github.com/repos/foo/bar/contents/.contributors'
+          }
+        },
+        'http://raw.github.com/repos/foo/bar/contents/.contributors': {
           body: ['bob']
         },
         'http://foo.com/user/repo/pulls/2/commits': {

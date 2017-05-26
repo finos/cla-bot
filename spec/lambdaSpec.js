@@ -9,7 +9,7 @@ const merge = (a, b) => Object.assign({}, a, b);
 
 const installationToken = 'this-is-a-test';
 
-process.env.INTEGRATION_KEY = 'clabot-dev-integration-key.pem';
+process.env.INTEGRATION_KEY = 'spec/test-key.pem';
 process.env.INTEGRATION_ID = 2208;
 process.env.INTEGRATION_ENABLED = true;
 

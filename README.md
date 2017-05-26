@@ -21,6 +21,7 @@ A bunch of things I'd like to do in order to make this an MVP.
   - [x] Use the GitHub status API so that projects can add pre-merge checks for the CLA
   - [ ] Create a super-awesome website that makes CLAs look fun and cool!
   - [ ] Add semantic release
+  - [x] Define .clabot at Github org/user level
 
 ## Installing cla-bot
 
@@ -28,7 +29,11 @@ A bunch of things I'd like to do in order to make this an MVP.
 
 In order to use cla-bot, you need to enable the integration for your personal projects, or an organisation. Visit https://github.com/integration/cla-bot, click 'Install', and select the project that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
 
-When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository. There are three possible configurations:
+When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository.
+
+The `.clabot` will be automatically resolved in the root project folder (for example, `https://github.com/foo/bar/blob/master/.clabot`), or in a Github repository called `clabot-config` that exists in the same user/organisation (for example, `https://github.com/foo/clabot-config/blob/master/.clabot`); the latter takes precedence.
+
+There are three possible configurations:
 
 ### Embedded contributor list
 
@@ -37,6 +42,24 @@ You can embed the contributors directly into the `.clabot` file as an array of G
 ```
 {
   "contributors": [ "frank", "bob", "sam" ]
+}
+```
+
+### Via URL
+
+You can define the URL to resolve the contributors as list as an array of Github usernames (JSON format):  an http(s) URL that is loaded at each PRwebhook which is invoked for each committer:
+
+```
+{
+  "contributorListUrl: "http://foo.com/static/contributors"
+}
+```
+
+You can also point to a Github hosted file, including private repositories (as it will use `GITHUB_ACCESS_TOKEN`, see below):
+
+```
+{
+  "contributorListGithubUrl": "https://api.github.com/repos/foo/bar/contents/.contributors",
 }
 ```
 

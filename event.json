@@ -2,14 +2,14 @@
   "body": {
     "action": "opened",
     "pull_request": {
-      "url": "https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/14",
-      "issue_url": "https://api.github.com/repos/ColinEberhardt/clabot-test/issues/14",
+      "url": "https://api.github.com/repos/symphonyoss/symphony-java-sample-bots/pulls/11",
+      "issue_url": "https://api.github.com/repos/symphonyoss/symphony-java-sample-bots/issues/11",
       "head": {
         "sha": "462eecdd0d4c822e64dafc774974f21e91ddd305"
       }
     },
     "repository": {
-      "url": "https://api.github.com/repos/ColinEberhardt/clabot-test"
+      "url": "https://api.github.com/repos/symphonyoss/symphony-java-sample-bots"
     },
     "installation": {
       "id": 25077

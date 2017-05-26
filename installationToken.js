@@ -13,14 +13,14 @@ module.exports = (installationId) => {
     });
 
   return requestp({
-  url: `https://api.github.com/installations/${installationId}/access_tokens`,
-  json: true,
-  headers: {
-    'Authorization': 'Bearer ' + token,
-    'User-Agent': 'github-cla-bot',
-    'Accept': 'application/vnd.github.machine-man-preview+json'
-  },
-  method: 'POST'
-})
-.then(({token}) => token);
+    url: `https://api.github.com/installations/${installationId}/access_tokens`,
+    json: true,
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'User-Agent': 'github-cla-bot',
+      'Accept': 'application/vnd.github.machine-man-preview+json'
+    },
+    method: 'POST'
+  })
+  .then(({token}) => token);
 };

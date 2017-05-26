@@ -1,9 +1,9 @@
 const requestp = require('./requestAsPromise');
 const gh = require('parse-github-url');
 
-const getOrgConfigUrl = (repositoryUrl) => {  
-  ghData = gh(repositoryUrl);
-  ghUrl = "https://" + ghData.host + "/repos/" + ghData.owner + "/clabot-config/contents/.clabot";
+const getOrgConfigUrl = (repositoryUrl) => {
+  const ghData = gh(repositoryUrl);
+  const ghUrl = 'https://' + ghData.host + '/repos/' + ghData.owner + '/clabot-config/contents/.clabot';
   return ghUrl;
 };
 
@@ -16,7 +16,6 @@ exports.githubRequest = (opts, token) =>
       },
       method: 'POST'
     }, opts));
-
 
 exports.getOrgConfig = ({webhook}) => ({
   url: getOrgConfigUrl(webhook.repository.url),

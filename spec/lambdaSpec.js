@@ -69,10 +69,13 @@ describe('lambda function', () => {
 
     // mock the typical requests that the lambda function makes
     mockConfig = {
-      // the bot first checks for an org-level config file
+      // // the bot first checks for an org-level config file
       'https://foo.com/repos/user/clabot-config/contents/.clabot': {
         // it returns an empty body, as a result a repo-local config file is used
-        body: {}
+        body: {},
+        response: {
+          statusCode: 404
+        }
       },
       // next step is to make a request for the download URL for the cla config
       'http://foo.com/user/repo/contents/.clabot': {
@@ -140,22 +143,52 @@ describe('lambda function', () => {
       });
     });
 
-    it('should handle HTTP status codes that are not OK (2xx)', (done) => {
-      const request = mockRequest({
-        response: {
-          statusCode: 404
+    it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
         }
-      });
+      }));
 
       mock('request', request);
       const lambda = require('../index');
 
+      const util = require('util');
       lambda.handler(event, {},
         (err, result) => {
-          expect(err).toEqual('Error: API request https://foo.com/repos/user/clabot-config/contents/.clabot failed with status 404');
+          expect(err).toBeNull();
           done();
         });
     });
+
+    it('should fail if no .clabot is provided', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        },
+        'http://foo.com/user/repo/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        },
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      const util = require('util');
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
+          done();
+        });
+    });
+
+
   });
 
   describe('authorization tokens', () => {

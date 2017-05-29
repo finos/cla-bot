@@ -7,7 +7,7 @@ const getOrgConfigUrl = (repositoryUrl) => {
   return ghUrl;
 };
 
-exports.githubRequest = (opts, token) =>
+exports.githubRequest = (opts, token, errorHandler) =>
     requestp(Object.assign({}, {
       json: true,
       headers: {
@@ -15,7 +15,7 @@ exports.githubRequest = (opts, token) =>
         'User-Agent': 'github-cla-bot'
       },
       method: 'POST'
-    }, opts));
+    }, opts), errorHandler);
 
 exports.getOrgConfig = ({webhook}) => ({
   url: getOrgConfigUrl(webhook.repository.url),

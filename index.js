@@ -27,10 +27,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
 
   console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
-  githubRequest(getOrgConfig(context), clabotToken)
+  githubRequest(getOrgConfig(context), clabotToken, (response) => {
+    // Defining (inline) a error handling function to avoid failing if configuration
+    // cannot be resolved at organisation level
+    console.log("Couldn't fetch .clabot from Github organisation project");
+    return { orgConfig: false };
+  })
     .then(body => {
-      if (!body.name || body.name === '') {
-        console.log("Couldn't fetch .clabot from Github organisation project; trying at project level");
+      if (!body['orgConfig']) {
+        console.log('Resolving .clabot at project level');
         return githubRequest(getReadmeUrl(context), clabotToken);
       }
       return body;

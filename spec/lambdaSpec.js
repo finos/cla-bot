@@ -69,13 +69,10 @@ describe('lambda function', () => {
 
     // mock the typical requests that the lambda function makes
     mockConfig = {
-      // // the bot first checks for an org-level config file
+      // the bot first checks for an org-level config file
       'https://foo.com/repos/user/clabot-config/contents/.clabot': {
         // it returns an empty body, as a result a repo-local config file is used
-        body: {},
-        response: {
-          statusCode: 404
-        }
+        body: {}
       },
       // next step is to make a request for the download URL for the cla config
       'http://foo.com/user/repo/contents/.clabot': {

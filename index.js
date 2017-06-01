@@ -14,7 +14,7 @@ const validAction = (action) =>
 exports.handler = ({ body }, lambdaContext, callback) => {
 
   const loggingCallback = (err, message) => {
-    console.log('callback', err, message);
+    console.info('callback', err, message);
     callback(err, message);
   };
 
@@ -28,7 +28,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     webhook: body
   };
 
-  console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
+  console.info(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
   githubRequest(getOrgConfig(context), clabotToken)
     // if the request to obtain the org-level .clabot file returns a non 2xx response
@@ -37,7 +37,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     .catch(() => ({ noOrgConfig }))
     .then(body => {
       if (!body.noOrgConfig) {
-        console.log('Resolving .clabot at project level');
+        console.info('Resolving .clabot at project level');
         return githubRequest(getReadmeUrl(context), clabotToken);
       }
       return body;

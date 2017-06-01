@@ -18,7 +18,7 @@ process.env.INTEGRATION_ENABLED = true;
 // request options
 const mockRequest = ({error, response, body, verifyRequest = noop}) =>
   (opts, cb) => {
-    console.log('Mocking response for ' + opts.url);
+    console.info('Mocking response for ' + opts.url);
     verifyRequest(opts, cb);
     cb(error, response, body);
   };
@@ -140,6 +140,10 @@ describe('lambda function', () => {
       });
     });
 
+  });
+
+  describe('clabot configuration resolution', () => {
+
     it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'https://foo.com/repos/user/clabot-config/contents/.clabot': {
@@ -259,7 +263,7 @@ describe('lambda function', () => {
         });
     });
 
-    it('should comment ans set status on pull requests where a CLA has not been signed', (done) => {
+    it('should comment and set status on pull requests where a CLA has not been signed', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {
           verifyRequest: (opts) => {

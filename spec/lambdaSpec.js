@@ -152,7 +152,6 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../index');
 
-      const util = require('util');
       lambda.handler(event, {},
         (err, result) => {
           expect(err).toBeNull();
@@ -171,20 +170,18 @@ describe('lambda function', () => {
           response: {
             statusCode: 404
           }
-        },
+        }
       }));
 
       mock('request', request);
       const lambda = require('../index');
 
-      const util = require('util');
       lambda.handler(event, {},
         (err, result) => {
           expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
         });
     });
-
 
   });
 

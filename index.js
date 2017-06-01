@@ -5,13 +5,16 @@ const {githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits,
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
+// a token value used to indicate that an organisation-level .clabot file was not found
+const noOrgConfig = false;
+
 const validAction = (action) =>
   ['opened', 'synchronize'].indexOf(action) !== -1;
 
 exports.handler = ({ body }, lambdaContext, callback) => {
 
   const loggingCallback = (err, message) => {
-    console.log('callback', err, message);
+    console.info('callback', err, message);
     callback(err, message);
   };
 
@@ -25,15 +28,21 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     webhook: body
   };
 
-  console.log(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
+  console.info(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
   githubRequest(getOrgConfig(context), clabotToken)
+    // if the request to obtain the org-level .clabot file returns a non 2xx response
+    // (typically 404), this catch block returns a 'token' value that indicates a
+    // project level file should be requested
+    .catch(() => ({ noOrgConfig }))
     .then(body => {
-      if (!body.name || body.name === '') {
-        console.log("Couldn't fetch .clabot from Github organisation project; trying at project level");
+      if ('noOrgConfig' in body) {
+        console.info('Resolving .clabot at project level');
         return githubRequest(getReadmeUrl(context), clabotToken);
+      } else {
+        console.info('Using org-level .clabot');
+        return body;
       }
-      return body;
     })
     .then(body => githubRequest(getFile(body), clabotToken))
     .then(config => {

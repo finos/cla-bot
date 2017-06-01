@@ -18,7 +18,7 @@ process.env.INTEGRATION_ENABLED = true;
 // request options
 const mockRequest = ({error, response, body, verifyRequest = noop}) =>
   (opts, cb) => {
-    console.log('Mocking response for ' + opts.url);
+    console.info('Mocking response for ' + opts.url);
     verifyRequest(opts, cb);
     cb(error, response, body);
   };
@@ -71,8 +71,10 @@ describe('lambda function', () => {
     mockConfig = {
       // the bot first checks for an org-level config file
       'https://foo.com/repos/user/clabot-config/contents/.clabot': {
-        // it returns an empty body, as a result a repo-local config file is used
-        body: {}
+        // it returns a 404, as a result a repo-local config file is used
+        response: {
+          statusCode: 404
+        }
       },
       // next step is to make a request for the download URL for the cla config
       'http://foo.com/user/repo/contents/.clabot': {
@@ -140,22 +142,82 @@ describe('lambda function', () => {
       });
     });
 
-    it('should handle HTTP status codes that are not OK (2xx)', (done) => {
-      const request = mockRequest({
-        response: {
-          statusCode: 404
+  });
+
+  describe('clabot configuration resolution', () => {
+
+    it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
+          }
         }
-      });
+      }));
 
       mock('request', request);
       const lambda = require('../index');
 
       lambda.handler(event, {},
         (err, result) => {
-          expect(err).toEqual('Error: API request https://foo.com/repos/user/clabot-config/contents/.clabot failed with status 404');
+          expect(err).toBeNull();
           done();
         });
     });
+
+    it('should use org-level configuration if present', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          done();
+        });
+    });
+
+    it('should fail if no .clabot is provided', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        },
+        'http://foo.com/user/repo/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
+          done();
+        });
+    });
+
   });
 
   describe('authorization tokens', () => {
@@ -232,7 +294,7 @@ describe('lambda function', () => {
         });
     });
 
-    it('should comment ans set status on pull requests where a CLA has not been signed', (done) => {
+    it('should comment and set status on pull requests where a CLA has not been signed', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {
           verifyRequest: (opts) => {

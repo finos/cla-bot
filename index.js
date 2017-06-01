@@ -36,11 +36,13 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     // project level file should be requested
     .catch(() => ({ noOrgConfig }))
     .then(body => {
-      if (!body.noOrgConfig) {
+      if ('noOrgConfig' in body) {
         console.info('Resolving .clabot at project level');
         return githubRequest(getReadmeUrl(context), clabotToken);
+      } else {
+        console.info('Using org-level .clabot');
+        return body;
       }
-      return body;
     })
     .then(body => githubRequest(getFile(body), clabotToken))
     .then(config => {

@@ -71,8 +71,10 @@ describe('lambda function', () => {
     mockConfig = {
       // the bot first checks for an org-level config file
       'https://foo.com/repos/user/clabot-config/contents/.clabot': {
-        // it returns an empty body, as a result a repo-local config file is used
-        body: {}
+        // it returns a 404, as a result a repo-local config file is used
+        response: {
+          statusCode: 404
+        }
       },
       // next step is to make a request for the download URL for the cla config
       'http://foo.com/user/repo/contents/.clabot': {
@@ -147,8 +149,37 @@ describe('lambda function', () => {
     it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'https://foo.com/repos/user/clabot-config/contents/.clabot': {
-          response: {
-            statusCode: 404
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          done();
+        });
+    });
+
+    it('should use org-level configuration if present', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
           }
         }
       }));

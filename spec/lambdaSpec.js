@@ -1,4 +1,4 @@
-/* globals describe it beforeEach afterEach expect fail */
+/* globals describe it beforeEach afterEach expect fail xit */
 const mock = require('mock-require');
 
 const noop = () => {};
@@ -9,7 +9,7 @@ const merge = (a, b) => Object.assign({}, a, b);
 
 const installationToken = 'this-is-a-test';
 
-process.env.INTEGRATION_KEY = 'clabot-dev-integration-key.pem';
+process.env.INTEGRATION_KEY = 'spec/test-key.pem';
 process.env.INTEGRATION_ID = 2208;
 process.env.INTEGRATION_ENABLED = true;
 
@@ -18,7 +18,7 @@ process.env.INTEGRATION_ENABLED = true;
 // request options
 const mockRequest = ({error, response, body, verifyRequest = noop}) =>
   (opts, cb) => {
-    console.log('Mocking response for ' + opts.url);
+    console.info('Mocking response for ' + opts.url);
     verifyRequest(opts, cb);
     cb(error, response, body);
   };
@@ -33,6 +33,7 @@ const mockMultiRequest = (config) =>
     if (config[url]) {
       return mockRequest(config[url])(opts, cb);
     } else {
+      console.error(`No mock found for request ${url}`);
       fail(`No mock found for request ${url}`);
     }
   };
@@ -68,7 +69,14 @@ describe('lambda function', () => {
 
     // mock the typical requests that the lambda function makes
     mockConfig = {
-      // the first step is to make a request for the download URL for the cla config
+      // the bot first checks for an org-level config file
+      'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+        // it returns a 404, as a result a repo-local config file is used
+        response: {
+          statusCode: 404
+        }
+      },
+      // next step is to make a request for the download URL for the cla config
       'http://foo.com/user/repo/contents/.clabot': {
         body: {
           download_url: 'http://raw.foo.com/user/repo/contents/.clabot'
@@ -104,6 +112,7 @@ describe('lambda function', () => {
   afterEach(() => {
     mock.stop('request');
     delete require.cache[require.resolve('../index')];
+    delete require.cache[require.resolve('../githubApi')];
     delete require.cache[require.resolve('../requestAsPromise')];
     delete require.cache[require.resolve('../contributionVerifier')];
     delete require.cache[require.resolve('../installationToken')];
@@ -123,7 +132,7 @@ describe('lambda function', () => {
 
   describe('HTTP issues', () => {
 
-    it('should propagate HTTP request errors', (done) => {
+    xit('should propagate HTTP request errors', (done) => {
       // create a mal-formed URL
       event.body.repository.url = 'http:://foo.com/user/repo';
       const lambda = require('../index');
@@ -133,12 +142,71 @@ describe('lambda function', () => {
       });
     });
 
-    it('should handle HTTP status codes that are not OK (2xx)', (done) => {
-      const request = mockRequest({
-        response: {
-          statusCode: 404
+  });
+
+  describe('clabot configuration resolution', () => {
+
+    it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
+          }
         }
-      });
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          done();
+        });
+    });
+
+    it('should use org-level configuration if present', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          body: {
+            download_url: 'http://raw.foo.com/clabot-config/contents/.clabot'
+          }
+        },
+        'http://raw.foo.com/clabot-config/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt']
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          done();
+        });
+    });
+
+    it('should fail if no .clabot is provided', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'https://foo.com/repos/user/clabot-config/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        },
+        'http://foo.com/user/repo/contents/.clabot': {
+          response: {
+            statusCode: 404
+          }
+        }
+      }));
 
       mock('request', request);
       const lambda = require('../index');
@@ -149,6 +217,7 @@ describe('lambda function', () => {
           done();
         });
     });
+
   });
 
   describe('authorization tokens', () => {
@@ -225,7 +294,7 @@ describe('lambda function', () => {
         });
     });
 
-    it('should comment ans set status on pull requests where a CLA has not been signed', (done) => {
+    it('should comment and set status on pull requests where a CLA has not been signed', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {
           verifyRequest: (opts) => {
@@ -283,6 +352,42 @@ describe('lambda function', () => {
   });
 
   describe('contributor check configuration', () => {
+    it('should support fetching of contributor list from a Github API URL', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          body: {
+            contributorListGithubUrl: 'https://api.github.com/repos/foo/bar/contents/.contributors'
+          }
+        },
+        'https://api.github.com/repos/foo/bar/contents/.contributors': {
+          body: {
+            download_url: 'http://raw.github.com/repos/foo/bar/contents/.contributors'
+          }
+        },
+        'http://raw.github.com/repos/foo/bar/contents/.contributors': {
+          body: ['bob']
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users [foo, ColinEberhardt], added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
     it('should support fetching of contributor list from a URL', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://raw.foo.com/user/repo/contents/.clabot': {

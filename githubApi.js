@@ -56,9 +56,9 @@ exports.setStatus = ({webhook}, state) => ({
   }
 });
 
-exports.addComment = ({webhook, config}) => ({
+exports.addComment = ({webhook, config}, message) => ({
   url: webhook.pull_request.issue_url + '/comments',
   body: {
-    body: config.message
+    body: config.message + "\n\n" + message
   }
 });

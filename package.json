@@ -14,7 +14,8 @@
   "dependencies": {
     "jsonwebtoken": "^7.4.0",
     "request": "^2.81.0",
-    "parse-github-url": "^0.3.2"
+    "parse-github-url": "^0.3.2",
+    "handlebars": "^4.0.10"
   },
   "devDependencies": {
     "eslint": "^3.19.0",

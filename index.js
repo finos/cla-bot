@@ -69,15 +69,14 @@ exports.handler = ({ body }, lambdaContext, callback) => {
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
       } else {
-        const nonContributorsIds = nonContributors.map(function(contributorId) {
+        const usersWithoutCLA = nonContributors.map(function (contributorId) {
           return '@' + contributorId;
         });
-        const messageToAppend = `CLA has not been signed by users ${nonContributorsIds.join(', ')}`;
-        return githubRequest(addComment(context, messageToAppend), clabotToken)
+        return githubRequest(addComment(context, usersWithoutCLA), clabotToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,
-            {'message': `${messageToAppend}, added a comment to ${context.webhook.pull_request.url}`}));
+            {'message': `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.webhook.pull_request.url}`}));
       }
     })
     .catch((err) => {

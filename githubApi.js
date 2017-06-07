@@ -1,3 +1,4 @@
+const handlebars = require('handlebars');
 const requestp = require('./requestAsPromise');
 const gh = require('parse-github-url');
 
@@ -56,9 +57,9 @@ exports.setStatus = ({webhook}, state) => ({
   }
 });
 
-exports.addComment = ({webhook, config}, message) => ({
+exports.addComment = ({webhook, config}, usersWithoutCLA) => ({
   url: webhook.pull_request.issue_url + '/comments',
   body: {
-    body: config.message + "\n\n" + message
+    body: handlebars.compile(config.message)
   }
 });

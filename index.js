@@ -69,9 +69,8 @@ exports.handler = ({ body }, lambdaContext, callback) => {
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
       } else {
-        const usersWithoutCLA = nonContributors.map(function (contributorId) {
-          return '@' + contributorId;
-        });
+        const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
+          .join(', ');
         return githubRequest(addComment(context, usersWithoutCLA), clabotToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))

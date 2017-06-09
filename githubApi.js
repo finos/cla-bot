@@ -58,7 +58,8 @@ exports.setStatus = ({webhook}, state) => ({
 });
 
 exports.addComment = ({webhook, config}, usersWithoutCLA) => {
-  var message = (config.message.indexOf('usersWithoutCLA') > 0) ? handlebars.compile(config.message) : config.message;
+  const template = handlebars.compile(config.message);
+  const message = template(this);
   return ({
     url: webhook.pull_request.issue_url + '/comments',
     body: {

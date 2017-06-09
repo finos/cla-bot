@@ -1,8 +1,9 @@
 {
   "root": true,
-  "extends": "standard",
+  "extends": "eslint-config-airbnb",
   "rules": {
-    "semi": ["error", "always"],
-    "padded-blocks": 0
+    "comma-dangle": 0,
+    "no-console": 0,
+    "no-else-return": 0
   }
 }

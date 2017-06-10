@@ -1,6 +1,6 @@
 const request = require('request');
 
-module.exports = (opts) => new Promise((resolve, reject) => {
+module.exports = opts => new Promise((resolve, reject) => {
   console.info('API Request', opts.url, opts.body || {});
   request(opts, (error, response, body) => {
     if (error) {

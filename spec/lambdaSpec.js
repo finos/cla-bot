@@ -1,9 +1,11 @@
 /* globals describe it beforeEach afterEach expect fail xit */
+/* eslint global-require:0 */
+/* eslint import/no-extraneous-dependencies:0 */
 const mock = require('mock-require');
 
 const noop = () => {};
 
-const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
+const deepCopy = obj => JSON.parse(JSON.stringify(obj));
 
 const merge = (a, b) => Object.assign({}, a, b);
 
@@ -16,30 +18,30 @@ process.env.INTEGRATION_ENABLED = true;
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
 // request options
-const mockRequest = ({error, response, body, verifyRequest = noop}) =>
+const mockRequest = ({ error, response, body, verifyRequest = noop }) =>
   (opts, cb) => {
-    console.info('Mocking response for ' + opts.url);
+    console.info(`Mocking response for ${opts.url}`);
     verifyRequest(opts, cb);
     cb(error, response, body);
   };
 
 // mock multiple requests, mapped by URL
-const mockMultiRequest = (config) =>
+const mockMultiRequest = config =>
   (opts, cb) => {
     const url = opts.url +
       (opts.qs
-        ? '?' + Object.keys(opts.qs).map(k => `${k}=${opts.qs[k]}`).join('=')
+        ? '?' + Object.keys(opts.qs).map(k => `${k}=${opts.qs[k]}`).join('=') // eslint-disable-line
         : '');
     if (config[url]) {
       return mockRequest(config[url])(opts, cb);
     } else {
       console.error(`No mock found for request ${url}`);
       fail(`No mock found for request ${url}`);
+      return {};
     }
   };
 
 describe('lambda function', () => {
-
   let event = {};
   let mockConfig = {};
 
@@ -131,7 +133,6 @@ describe('lambda function', () => {
   });
 
   describe('HTTP issues', () => {
-
     xit('should propagate HTTP request errors', (done) => {
       // create a mal-formed URL
       event.body.repository.url = 'http:://foo.com/user/repo';
@@ -141,11 +142,9 @@ describe('lambda function', () => {
         done();
       });
     });
-
   });
 
   describe('clabot configuration resolution', () => {
-
     it('should resolve .clabot on project root, if clabot-config is not present at org-level', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'https://foo.com/repos/user/clabot-config/contents/.clabot': {
@@ -164,7 +163,7 @@ describe('lambda function', () => {
       const lambda = require('../index');
 
       lambda.handler(event, {},
-        (err, result) => {
+        (err) => {
           expect(err).toBeNull();
           done();
         });
@@ -188,7 +187,7 @@ describe('lambda function', () => {
       const lambda = require('../index');
 
       lambda.handler(event, {},
-        (err, result) => {
+        (err) => {
           expect(err).toBeNull();
           done();
         });
@@ -212,21 +211,20 @@ describe('lambda function', () => {
       const lambda = require('../index');
 
       lambda.handler(event, {},
-        (err, result) => {
+        (err) => {
           expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
         });
     });
-
   });
 
   describe('authorization tokens', () => {
-
     const verifyToken = (urls, expectedToken) => {
-      const mock = deepCopy(mockConfig);
+      const mock = deepCopy(mockConfig); // eslint-disable-line
       urls.forEach((url) => {
         mock[url].verifyRequest = (opts) => {
-          expect(opts.headers.Authorization).toEqual('token ' + expectedToken);
+          console.log(opts.headers);
+          expect(opts.headers.Authorization).toEqual(`token ${expectedToken}`);
         };
       });
       return mock;
@@ -420,7 +418,6 @@ describe('lambda function', () => {
     });
 
     it('should support fetching of contributors via a webhook', (done) => {
-
       const request = mockMultiRequest(merge(mockConfig, {
         'http://raw.foo.com/user/repo/contents/.clabot': {
           body: {

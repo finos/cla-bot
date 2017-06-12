@@ -17,7 +17,7 @@ A bunch of things I'd like to do in order to make this an MVP.
   - [x] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
   - [ ] Allow PRs to be re-checked after a user has signed a CLA (perhaps the bot could be 'pinged' via a comment?)
   - [x] Turn this into a GitHub integration rather than a manually configured webhook
-  - [ ] Allow insertion of usernames into custom message
+  - [x] Allow insertion of usernames into custom message
   - [x] Use the GitHub status API so that projects can add pre-merge checks for the CLA
   - [ ] Create a super-awesome website that makes CLAs look fun and cool!
   - [ ] Add semantic release
@@ -81,12 +81,30 @@ With each invocation, the `checkContributor` querystring parameter is used to su
 }
 ```
 
-### Additional configuration
+### Adding a custom message
 
-TODO:
+If you wish to add a custom message, include a `message` property within the `.cla-bot` file. This can optionally include a `{{usersWithoutCLA}}` token which is expanded out to the names of the contributors who have not signed a CLA.
 
- - customise the label
- - add a custom message
+For example:
+
+```
+{
+  "contributors": [ "frank", "bob", "sam" ],
+  "message": "We require contributors to sign our Contributor License Agreement, and we don\"t have {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact @FriendlyAdmin to get yourself added."
+}
+```
+
+It is good practice to include details of who to contact in order to go ahead with the CLA signing process.
+
+### Adding a custom label
+
+If a PR is opened where all the contributors have signed the CLA, it is labelled with `cla-signed`. You can configure this behaviour as follows:
+
+```
+{
+  "label": "my-custom-label"
+}
+```
 
 ## Development
 

@@ -347,6 +347,39 @@ describe('lambda function', () => {
           done();
         });
     });
+
+    it('should allow configuration of the pull request comment to include non-cla signed contributors', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'foo' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        },
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          body: {
+            contributors: ['ColinEberhardt'],
+            message: 'These are the naught ones {{usersWithoutCLA}} report them!'
+          }
+        },
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('These are the naught ones @foo, @bob report them!');
+          }
+        },
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err) => {
+          expect(err).toBeNull();
+          done();
+        });
+    });
   });
 
   describe('contributor check configuration', () => {

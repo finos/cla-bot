@@ -6,7 +6,7 @@ const integrationId = process.env.INTEGRATION_ID;
 
 module.exports = (installationId) => {
   const cert = fs.readFileSync(process.env.INTEGRATION_KEY);
-  const token = jwt.sign({ iss: integrationId },
+  const integrationToken = jwt.sign({ iss: integrationId },
     cert, {
       algorithm: 'RS256',
       expiresIn: '10m'
@@ -16,11 +16,11 @@ module.exports = (installationId) => {
     url: `https://api.github.com/installations/${installationId}/access_tokens`,
     json: true,
     headers: {
-      'Authorization': 'Bearer ' + token,
+      Authorization: `Bearer ${integrationToken}`,
       'User-Agent': 'github-cla-bot',
-      'Accept': 'application/vnd.github.machine-man-preview+json'
+      Accept: 'application/vnd.github.machine-man-preview+json'
     },
     method: 'POST'
   })
-  .then(({token}) => token);
+  .then(({ token }) => token);
 };

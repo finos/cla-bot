@@ -1,25 +1,24 @@
 const fs = require('fs');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const {githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel} = require('./githubApi');
+const { githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel } = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
 // a token value used to indicate that an organisation-level .clabot file was not found
 const noOrgConfig = false;
 
-const validAction = (action) =>
+const validAction = action =>
   ['opened', 'synchronize'].indexOf(action) !== -1;
 
 exports.handler = ({ body }, lambdaContext, callback) => {
-
   const loggingCallback = (err, message) => {
     console.info('callback', err, message);
     callback(err, message);
   };
 
   if (!validAction(body.action)) {
-    loggingCallback(null, {'message': 'ignored action of type ' + body.action});
+    loggingCallback(null, { message: `ignored action of type ${body.action}` });
     return;
   }
 
@@ -35,17 +34,17 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     // (typically 404), this catch block returns a 'token' value that indicates a
     // project level file should be requested
     .catch(() => ({ noOrgConfig }))
-    .then(body => {
-      if ('noOrgConfig' in body) {
+    .then((orgConfig) => {
+      if ('noOrgConfig' in orgConfig) {
         console.info('Resolving .clabot at project level');
         return githubRequest(getReadmeUrl(context), clabotToken);
       } else {
         console.info('Using org-level .clabot');
-        return body;
+        return orgConfig;
       }
     })
-    .then(body => githubRequest(getFile(body), clabotToken))
-    .then(config => {
+    .then(orgConfig => githubRequest(getFile(orgConfig), clabotToken))
+    .then((config) => {
       context.config = Object.assign({}, defaultConfig, config);
       // if we are running as an integration, obtain the required integration token, otherwise
       if (process.env.INTEGRATION_ENABLED && process.env.INTEGRATION_ENABLED === 'true') {
@@ -54,7 +53,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         return clabotToken;
       }
     })
-    .then(token => {
+    .then((token) => {
       context.userToken = token;
       return githubRequest(getCommits(context), context.userToken);
     })
@@ -67,13 +66,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (nonContributors.length === 0) {
         return githubRequest(addLabel(context), context.userToken)
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
-          .then(() => loggingCallback(null, {'message': `added label ${context.config.label} to ${context.webhook.pull_request.url}`}));
+          .then(() => loggingCallback(null, { message: `added label ${context.config.label} to ${context.webhook.pull_request.url}` }));
       } else {
-        return githubRequest(addComment(context), clabotToken)
+        const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
+          .join(', ');
+        return githubRequest(addComment(context, usersWithoutCLA), clabotToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,
-            {'message': `CLA has not been signed by users [${nonContributors.join(', ')}], added a comment to ${context.webhook.pull_request.url}`}));
+            { message: `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.webhook.pull_request.url}` }));
       }
     })
     .catch((err) => {

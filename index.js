@@ -22,14 +22,25 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     return;
   }
 
-  const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
   const context = {
     webhook: body
   };
 
   console.info(`Checking CLAs for PR ${context.webhook.pull_request.url}`);
 
-  githubRequest(getOrgConfig(context), clabotToken)
+  Promise.resolve()
+    .then(() => {
+      // if we are running as an integration, obtain the required integration token
+      if (process.env.INTEGRATION_ENABLED && process.env.INTEGRATION_ENABLED === 'true') {
+        return installationToken(context.webhook.installation.id);
+      } else {
+        return process.env.GITHUB_ACCESS_TOKEN;
+      }
+    })
+    .then((token) => {
+      context.userToken = token;
+      return githubRequest(getOrgConfig(context), context.userToken);
+    })
     // if the request to obtain the org-level .clabot file returns a non 2xx response
     // (typically 404), this catch block returns a 'token' value that indicates a
     // project level file should be requested
@@ -37,24 +48,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     .then((orgConfig) => {
       if ('noOrgConfig' in orgConfig) {
         console.info('Resolving .clabot at project level');
-        return githubRequest(getReadmeUrl(context), clabotToken);
+        return githubRequest(getReadmeUrl(context), context.userToken);
       } else {
         console.info('Using org-level .clabot');
         return orgConfig;
       }
     })
-    .then(orgConfig => githubRequest(getFile(orgConfig), clabotToken))
+    .then(orgConfig => githubRequest(getFile(orgConfig), context.userToken))
     .then((config) => {
       context.config = Object.assign({}, defaultConfig, config);
-      // if we are running as an integration, obtain the required integration token, otherwise
-      if (process.env.INTEGRATION_ENABLED && process.env.INTEGRATION_ENABLED === 'true') {
-        return installationToken(context.webhook.installation.id);
-      } else {
-        return clabotToken;
-      }
-    })
-    .then((token) => {
-      context.userToken = token;
       return githubRequest(getCommits(context), context.userToken);
     })
     .then((commits) => {
@@ -70,7 +72,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       } else {
         const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
           .join(', ');
-        return githubRequest(addComment(context, usersWithoutCLA), clabotToken)
+        return githubRequest(addComment(context, usersWithoutCLA), context.userToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'failure'), context.userToken))
           .then(() => loggingCallback(null,

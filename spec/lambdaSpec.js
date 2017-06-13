@@ -230,12 +230,12 @@ describe('lambda function', () => {
       return mock;
     };
 
-    it('should add the bot GitHub auth token for the initial requests', (done) => {
+    it('should use the clients auth token forthe initial requests', (done) => {
       process.env.GITHUB_ACCESS_TOKEN = 'bot-token';
       const request = mockMultiRequest(verifyToken([
         'http://foo.com/user/repo/contents/.clabot',
         'http://raw.foo.com/user/repo/contents/.clabot'
-      ], 'bot-token'));
+      ], installationToken));
 
       mock('request', request);
       const lambda = require('../index');

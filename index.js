@@ -62,7 +62,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     .then((commits) => {
       const committers = commits.map(c => c.author.login);
       const verifier = contributionVerifier(context.config);
-      return verifier(committers);
+      return verifier(committers, context.userToken);
     })
     .then((nonContributors) => {
       if (nonContributors.length === 0) {

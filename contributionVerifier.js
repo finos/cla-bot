@@ -1,14 +1,12 @@
 const requestp = require('./requestAsPromise');
 const { githubRequest, getFile } = require('./githubApi');
 
-const clabotToken = process.env.GITHUB_ACCESS_TOKEN;
-
 const contributorArrayVerifier = contributors =>
   committers =>
     Promise.resolve(committers.filter(c => contributors.indexOf(c) === -1));
 
 const configFileFromGithubUrlVerifier = contributorListGithubUrl =>
-  committers =>
+  (committers, clabotToken) =>
     githubRequest({
       url: contributorListGithubUrl,
       method: 'GET'

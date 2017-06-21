@@ -230,7 +230,7 @@ describe('lambda function', () => {
       return mock;
     };
 
-    it('should use the clients auth token forthe initial requests', (done) => {
+    it('should use the clients auth token for the initial requests', (done) => {
       process.env.GITHUB_ACCESS_TOKEN = 'bot-token';
       const request = mockMultiRequest(verifyToken([
         'http://foo.com/user/repo/contents/.clabot',

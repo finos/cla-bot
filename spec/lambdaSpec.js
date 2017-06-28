@@ -20,7 +20,6 @@ process.env.INTEGRATION_ENABLED = true;
 // request options
 const mockRequest = ({ error, response, body, verifyRequest = noop }) =>
   (opts, cb) => {
-    console.info(`Mocking response for ${opts.url}`);
     verifyRequest(opts, cb);
     cb(error, response, body);
   };
@@ -216,6 +215,30 @@ describe('lambda function', () => {
           done();
         });
     });
+
+    it('should detect a malformed clabot file', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://raw.foo.com/user/repo/contents/.clabot': {
+          // return an invalid configuration
+          body: 'asdasd'
+        },
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            // ensure the status is reported as a failure
+            expect(opts.body.state).toEqual('failure');
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err) => {
+          expect(err).toEqual('Error: The .clabot file is not valid JSON');
+          done();
+        });
+    });
   });
 
   describe('authorization tokens', () => {
@@ -223,7 +246,6 @@ describe('lambda function', () => {
       const mock = deepCopy(mockConfig); // eslint-disable-line
       urls.forEach((url) => {
         mock[url].verifyRequest = (opts) => {
-          console.log(opts.headers);
           expect(opts.headers.Authorization).toEqual(`token ${expectedToken}`);
         };
       });
@@ -296,7 +318,7 @@ describe('lambda function', () => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {
           verifyRequest: (opts) => {
-            expect(opts.body.state).toEqual('failure');
+            expect(opts.body.state).toEqual('error');
             expect(opts.body.context).toEqual('verification/cla-signed');
           }
         },
@@ -534,7 +556,7 @@ describe('lambda function', () => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {
           verifyRequest: (opts) => {
-            expect(opts.body.state).toEqual('failure');
+            expect(opts.body.state).toEqual('error');
             expect(opts.body.context).toEqual('verification/cla-signed');
           }
         },

@@ -49,11 +49,12 @@ exports.getCommits = ({ webhook }) => ({
   method: 'GET'
 });
 
-exports.setStatus = ({ webhook }, state) => ({
+exports.setStatus = ({ webhook, correlationKey }, state) => ({
   url: `${webhook.repository.url}/statuses/${webhook.pull_request.head.sha}`,
   body: {
     state,
-    context: 'verification/cla-signed'
+    context: 'verification/cla-signed',
+    target_url: `https://colineberhardt.github.io/cla-bot/logs?correlationKey=${correlationKey}`
   }
 });
 

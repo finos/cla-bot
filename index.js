@@ -30,12 +30,12 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   // when running the unit tests to given a cleaner output
   const adaptee = console.info;
   console.info = (level, message, detail) => {
-    adaptee({
+    adaptee(JSON.stringify({
       correlationKey,
       level,
       message,
       detail
-    });
+    }));
   };
 
   const context = {

@@ -31,6 +31,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   const adaptee = console.info;
   console.info = (level, message, detail) => {
     adaptee(JSON.stringify({
+      time: new Date().toISOString(),
       correlationKey,
       level,
       message,

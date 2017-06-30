@@ -54,7 +54,7 @@ exports.setStatus = ({ webhook, correlationKey }, state) => ({
   body: {
     state,
     context: 'verification/cla-signed',
-    target_url: `https://colineberhardt.github.io/cla-bot/logs?correlationKey=${correlationKey}`
+    target_url: `${process.env.LOG_URL}?correlationKey=${correlationKey}`
   }
 });
 

@@ -37,7 +37,7 @@ li > a {
 <script src="handlebars-v4.0.10.js"></script>
 <script src="bootstrap.min.js"></script>
 
-<script id="entry-template" type="text/x-handlebars-template">
+<script id="log-template" type="text/x-handlebars-template">
   <ul>
     {{#each .}}
       <li class='level-{{level}}'>
@@ -50,6 +50,11 @@ li > a {
       </li>
     {{/each}}
   </ul>
+</script>
+
+<script id="no-log-template" type="text/x-handlebars-template">
+  <p>The cla-bot was unable to find the log output for the given pull request. Please try again shortly, sometimes logging
+    information take a little while to be accessible.</p>
 </script>
 
 <script>
@@ -71,14 +76,20 @@ Handlebars.registerHelper('trim', function(context) {
 
 var query = location.search.slice(1).split('=');
 var correlationKey = query[1];
-var source = $("#entry-template").html();
-var template = Handlebars.compile(source);
 
 $.get('https://9aq9pcew45.execute-api.us-east-2.amazonaws.com/prod',
   { correlationKey: correlationKey })
   .done(function(res) {
     console.log(res);
-    $("#log-output").html(template(res));
-    $('.collapse').collapse('hide');
+    if (res.length === 0) {
+      var source = $("#no-log-template").html();
+      var template = Handlebars.compile(source);
+      $("#log-output").html(template(res));
+    } else {
+      var source = $("#log-template").html();
+      var template = Handlebars.compile(source);
+      $("#log-output").html(template(res));
+      $('.collapse').collapse('hide');
+    }
   });
 </script>

@@ -111,7 +111,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
     })
     .catch((err) => {
-      console.info('ERROR', err);
+      console.info('ERROR', err.toString());
       githubRequest(setStatus(context, 'failure'), context.userToken)
         .then(() => loggingCallback(err.toString()));
     });

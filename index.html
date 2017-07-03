@@ -21,7 +21,10 @@ li > a {
   font-weight: bold;
 }
 .level-DEBUG {
-  opacity: 0.7;
+  opacity: 0.5;
+}
+.level-ERROR > .level {
+  color: red;
 }
 </style>
 
@@ -39,7 +42,7 @@ li > a {
     {{#each .}}
       <li class='level-{{level}}'>
         <span class='level'>{{level}}:</span>
-        {{message}}
+        {{trim message}}
         {{#if detail}}
           <a href='#' data-toggle="collapse" data-target="#collapse-{{@index}}">expand</a>
           <pre class="collapse" id="collapse-{{@index}}">{{{json detail}}}'</pre>
@@ -52,6 +55,18 @@ li > a {
 <script>
 Handlebars.registerHelper('json', function(context) {
   return JSON.stringify(context, null, 2).replace(/'/g, "&#39;");
+});
+
+Handlebars.registerHelper('trim', function(context) {
+  if (typeof context === 'string') {
+    if (context.length > 100) {
+      return new Handlebars.SafeString(context.substring(0, 100) + '...')
+    } else {
+      return context;
+    }
+  } else {
+    return '';
+  }
 });
 
 var query = location.search.slice(1).split('=');

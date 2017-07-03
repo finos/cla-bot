@@ -44,16 +44,12 @@ const webhookVerifier = webhookUrl =>
 
 module.exports = (config) => {
   if (config.contributors) {
-    console.info('INFO', 'Checking contributors against the list supplied in the .clabot file');
     return contributorArrayVerifier(config.contributors);
   } else if (config.contributorListGithubUrl) {
-    console.info('INFO', 'Checking contributors against the github URL supplied in the .clabot file');
     return configFileFromGithubUrlVerifier(config.contributorListGithubUrl);
   } else if (config.contributorListUrl) {
-    console.info('INFO', 'Checking contributors against the URL supplied in the .clabot file');
     return configFileFromUrlVerifier(config.contributorListUrl);
   } else if (config.contributorWebhook) {
-    console.info('INFO', 'Checking contributors against the webhook supplied in the .clabot file');
     return webhookVerifier(config.contributorWebhook);
   }
   throw new Error('A mechanism for verifying contributors has not been specified');

@@ -49,7 +49,7 @@ exports.getCommits = ({ webhook }) => ({
   method: 'GET'
 });
 
-exports.setStatus = ({ webhook, correlationKey }, state) => ({
+exports.setStatus = ({ webhook }, state) => ({
   url: `${webhook.repository.url}/statuses/${webhook.pull_request.head.sha}`,
   body: {
     state,

@@ -53,7 +53,8 @@ exports.setStatus = ({ webhook }, state) => ({
   url: `${webhook.repository.url}/statuses/${webhook.pull_request.head.sha}`,
   body: {
     state,
-    context: 'verification/cla-signed'
+    context: 'verification/cla-signed',
+    target_url: `${process.env.LOG_URL}?correlationKey=${correlationKey}`
   }
 });
 

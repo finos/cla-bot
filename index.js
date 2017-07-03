@@ -22,6 +22,21 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     return;
   }
 
+  // adapt the console messages to add a correlation key
+  const correlationKey = uuid();
+  // we use console.info because AWS logs this, however, we can suppress console.info
+  // when running the unit tests to given a cleaner output
+  const adaptee = console.info;
+  console.info = (level, message, detail) => {
+    adaptee(JSON.stringify({
+      time: new Date().toISOString(),
+      correlationKey,
+      level,
+      message,
+      detail
+    }));
+  };
+
   const context = {
     webhook: body
   };
@@ -80,6 +95,8 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
     })
     .catch((err) => {
-      loggingCallback(err.toString());
+      console.info('ERROR', err.toString());
+      githubRequest(setStatus(context, 'failure'), context.userToken)
+        .then(() => loggingCallback(err.toString()));
     });
 };

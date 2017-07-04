@@ -11,7 +11,10 @@ const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 const noOrgConfig = false;
 
 const validAction = action =>
-  ['opened', 'synchronize'].indexOf(action) !== -1;
+  ['opened', 'synchronize', 'issue_comment'].indexOf(action) !== -1;
+
+const commentSummonsBot = comment =>
+  comment.match(new RegExp(`@${process.env.BOT_NAME}(\\[bot\\])?\\s*check`)) !== null;
 
 exports.handler = ({ body }, lambdaContext, callback) => {
   const loggingCallback = (error, message) => {
@@ -21,6 +24,10 @@ exports.handler = ({ body }, lambdaContext, callback) => {
 
   if (!validAction(body.action)) {
     loggingCallback(null, { message: `ignored action of type ${body.action}` });
+    return;
+  }
+
+  if (body.action === 'issue_comment' && !commentSummonsBot(body.comment.body)) {
     return;
   }
 
@@ -115,4 +122,8 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       githubRequest(setStatus(context, 'failure'), context.userToken)
         .then(() => loggingCallback(err.toString()));
     });
+};
+
+exports.test = {
+  commentSummonsBot
 };

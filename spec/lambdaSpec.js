@@ -14,6 +14,7 @@ const installationToken = 'this-is-a-test';
 process.env.INTEGRATION_KEY = 'spec/test-key.pem';
 process.env.INTEGRATION_ID = 2208;
 process.env.INTEGRATION_ENABLED = true;
+process.env.BOT_NAME = 'cla-bot';
 
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
@@ -589,6 +590,25 @@ describe('lambda function', () => {
           expect(result.message).toEqual('CLA has not been signed by users @foo, added a comment to http://foo.com/user/repo/pulls/2');
           done();
         });
+    });
+  });
+});
+
+describe('lambda internals', () => {
+  const internals = require('../index').test;
+
+  describe('commentSummonsBot', () => {
+    it('should match comments with one space', () => {
+      expect(internals.commentSummonsBot('asdasd @cla-bot[bot] check dasd')).toBe(true);
+    });
+    it('should match comments without the bot suffix space', () => {
+      expect(internals.commentSummonsBot('asdasd @cla-bot[bot] check dasd')).toBe(true);
+    });
+    it('should match comments with multiple spaces', () => {
+      expect(internals.commentSummonsBot('@cla-bot[bot]    check')).toBe(true);
+    });
+    it('should not match comments without the correct text', () => {
+      expect(internals.commentSummonsBot('@cla-bot[bot]    chek')).toBe(false);
     });
   });
 });

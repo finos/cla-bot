@@ -16,6 +16,18 @@ const sideEffect = fn => d =>
 const validAction = action =>
   ['opened', 'synchronize', 'created'].indexOf(action) !== -1;
 
+// depending on the event type, the way the location of the PR and issue URLs are different
+const gitHubUrls = webhook =>
+  (webhook.action === 'created'
+    ? {
+      pullRequest: webhook.issue.pull_request.url,
+      issue: webhook.issue.url
+    }
+    : {
+      pullRequest: webhook.pull_request.url,
+      issue: webhook.pull_request.issue_url
+    });
+
 const commentSummonsBot = comment =>
   comment.match(new RegExp(`@${process.env.BOT_NAME}(\\[bot\\])?\\s*check`)) !== null;
 
@@ -52,10 +64,16 @@ exports.handler = ({ body }, lambdaContext, callback) => {
 
   const context = {
     webhook: body,
-    correlationKey
+    correlationKey,
+    gitHubUrls: gitHubUrls(body),
   };
 
-  console.info('INFO', `Checking CLAs for pull request ${context.webhook.pull_request.url}`);
+  // PRs include the head sha, for comments we have to determine this from the commit history
+  if (body.pull_request) {
+    context.headSha = body.pull_request.head.sha;
+  }
+
+  console.info('INFO', `Checking CLAs for pull request ${context.gitHubUrls.pullRequest}`);
 
   Promise.resolve()
     .then(() => {
@@ -100,6 +118,9 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     })
     .then((commits) => {
       console.info('INFO', `A total of ${commits.length} were found, checking CLA status for committers`);
+      if (!context.headSha) {
+        context.headSha = commits[commits.length - 1].sha;
+      }
       const committers = commits.map(c => c.author.login);
       const verifier = contributionVerifier(context.config);
       return verifier(committers, context.userToken);
@@ -109,7 +130,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         console.info('INFO', 'All contributors have a signed CLA, adding success status to the pull request and a label');
         return githubRequest(addLabel(context), context.userToken)
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
-          .then(() => `added label ${context.config.label} to ${context.webhook.pull_request.url}`);
+          .then(() => `added label ${context.config.label} to ${context.gitHubUrls.pullRequest}`);
       } else {
         const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
           .join(', ');
@@ -117,7 +138,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         return githubRequest(addComment(context, usersWithoutCLA), context.userToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'error'), context.userToken))
-          .then(() => `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.webhook.pull_request.url}`);
+          .then(() => `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.gitHubUrls.pullRequest}`);
       }
     })
     .then(sideEffect(() => {

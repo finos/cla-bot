@@ -33,24 +33,24 @@ exports.getFile = body => ({
   method: 'GET'
 });
 
-exports.addLabel = ({ webhook, config }) => ({
-  url: `${webhook.pull_request.issue_url}/labels`,
+exports.addLabel = ({ gitHubUrls, config }) => ({
+  url: `${gitHubUrls.issue}/labels`,
   body: [config.label]
 });
 
-exports.deleteLabel = ({ webhook, config }) => ({
-  url: `${webhook.pull_request.issue_url}/labels`,
+exports.deleteLabel = ({ gitHubUrls, config }) => ({
+  url: `${gitHubUrls.issue}/labels`,
   body: [config.label],
   method: 'DELETE'
 });
 
-exports.getCommits = ({ webhook }) => ({
-  url: `${webhook.pull_request.url}/commits`,
+exports.getCommits = ({ gitHubUrls }) => ({
+  url: `${gitHubUrls.pullRequest}/commits`,
   method: 'GET'
 });
 
-exports.setStatus = ({ webhook, correlationKey }, state) => ({
-  url: `${webhook.repository.url}/statuses/${webhook.pull_request.head.sha}`,
+exports.setStatus = ({ webhook, gitHubUrls, correlationKey, headSha }, state) => ({
+  url: `${webhook.repository.url}/statuses/${headSha}`,
   body: {
     state,
     context: 'verification/cla-signed',
@@ -58,18 +58,18 @@ exports.setStatus = ({ webhook, correlationKey }, state) => ({
   }
 });
 
-exports.addRecheckComment = ({ webhook, config }) => ({
-  url: `${webhook.pull_request.issue_url}/comments`,
+exports.addRecheckComment = ({ gitHubUrls, config }) => ({
+  url: `${gitHubUrls.issue}/comments`,
   body: {
     body: config.recheckComment
   }
 });
 
-exports.addComment = ({ webhook, config }, usersWithoutCLA) => {
+exports.addComment = ({ gitHubUrls, config }, usersWithoutCLA) => {
   const template = handlebars.compile(config.message);
   const message = template({ usersWithoutCLA });
   return ({
-    url: `${webhook.pull_request.issue_url}/comments`,
+    url: `${gitHubUrls.issue}/comments`,
     body: {
       body: message
     }

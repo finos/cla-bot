@@ -407,6 +407,11 @@ describe('lambda function', () => {
 
   describe('bot summoned to re-check', () => {
     it('should add a comment to indicate it was successfully summoned', (done) => {
+      event.body.action = 'created';
+      event.body.comment = {
+        body: '@cla-bot check'
+      };
+
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/issues/2/comments': {
           verifyRequest: (opts) => {

@@ -99,7 +99,10 @@ describe('lambda function', () => {
       // the next is to download the commits for the PR
       'http://foo.com/user/repo/pulls/2/commits': {
         body: [
-          { author: { login: 'ColinEberhardt' } }
+          {
+            sha: '1234',
+            author: { login: 'ColinEberhardt' }
+          }
         ]
       },
       // next we add the relevant status
@@ -407,9 +410,26 @@ describe('lambda function', () => {
 
   describe('bot summoned to re-check', () => {
     it('should add a comment to indicate it was successfully summoned', (done) => {
-      event.body.action = 'created';
-      event.body.comment = {
-        body: '@cla-bot check'
+      // comments have a slightly different payload.
+      event = {
+        body: {
+          action: 'created',
+          issue: {
+            url: 'http://foo.com/user/repo/issues/2',
+            pull_request: {
+              url: 'http://foo.com/user/repo/pulls/2'
+            }
+          },
+          comment: {
+            body: '@cla-bot check'
+          },
+          repository: {
+            url: 'http://foo.com/user/repo'
+          },
+          installation: {
+            id: 1000
+          }
+        }
       };
 
       const request = mockMultiRequest(merge(mockConfig, {
@@ -629,7 +649,7 @@ describe('lambda internals', () => {
       expect(internals.commentSummonsBot('asdasd @cla-bot[bot] check dasd')).toBe(true);
     });
     it('should match comments without the bot suffix space', () => {
-      expect(internals.commentSummonsBot('asdasd @cla-bot[bot] check dasd')).toBe(true);
+      expect(internals.commentSummonsBot('asdasd @cla-bot check dasd')).toBe(true);
     });
     it('should match comments with multiple spaces', () => {
       expect(internals.commentSummonsBot('@cla-bot[bot]    check')).toBe(true);

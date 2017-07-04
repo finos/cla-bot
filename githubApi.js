@@ -58,6 +58,13 @@ exports.setStatus = ({ webhook, correlationKey }, state) => ({
   }
 });
 
+exports.addRecheckComment = ({ webhook, config }) => ({
+  url: `${webhook.pull_request.issue_url}/comments`,
+  body: {
+    body: config.recheckComment
+  }
+});
+
 exports.addComment = ({ webhook, config }, usersWithoutCLA) => {
   const template = handlebars.compile(config.message);
   const message = template({ usersWithoutCLA });

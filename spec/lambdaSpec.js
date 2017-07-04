@@ -405,6 +405,28 @@ describe('lambda function', () => {
     });
   });
 
+  describe('bot summoned to re-check', () => {
+    it('should add a comment to indicate it was successfully summoned', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('The cla-bot has been summoned, and re-checked this pull request!');
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+  });
+
   describe('contributor check configuration', () => {
     it('should support fetching of contributor list from a Github API URL', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {

@@ -3,12 +3,15 @@ const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
 const uuid = require('uuid/v1');
 const is = require('is_js');
-const { githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel } = require('./githubApi');
+const { githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
 
 // a token value used to indicate that an organisation-level .clabot file was not found
 const noOrgConfig = false;
+
+const sideEffect = fn => d =>
+  fn(d).then(() => d);
 
 const validAction = action =>
   ['opened', 'synchronize', 'issue_comment'].indexOf(action) !== -1;
@@ -105,7 +108,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         console.info('INFO', 'All contributors have a signed CLA, adding success status to the pull request and a label');
         return githubRequest(addLabel(context), context.userToken)
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
-          .then(() => loggingCallback(null, { message: `added label ${context.config.label} to ${context.webhook.pull_request.url}` }));
+          .then(() => `added label ${context.config.label} to ${context.webhook.pull_request.url}`);
       } else {
         const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
           .join(', ');
@@ -113,10 +116,16 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         return githubRequest(addComment(context, usersWithoutCLA), context.userToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'error'), context.userToken))
-          .then(() => loggingCallback(null,
-            { message: `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.webhook.pull_request.url}` }));
+          .then(() => `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.webhook.pull_request.url}`);
       }
     })
+    .then(sideEffect(() => {
+      if (context.webhook.action === 'issue_comment') {
+        return githubRequest(addRecheckComment(context), context.userToken);
+      }
+      return Promise.resolve('');
+    }))
+    .then(message => loggingCallback(null, { message }))
     .catch((err) => {
       console.info('ERROR', err.toString());
       githubRequest(setStatus(context, 'failure'), context.userToken)

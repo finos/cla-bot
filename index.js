@@ -14,7 +14,7 @@ const sideEffect = fn => d =>
   fn(d).then(() => d);
 
 const validAction = action =>
-  ['opened', 'synchronize', 'issue_comment'].indexOf(action) !== -1;
+  ['opened', 'synchronize', 'created'].indexOf(action) !== -1;
 
 const commentSummonsBot = comment =>
   comment.match(new RegExp(`@${process.env.BOT_NAME}(\\[bot\\])?\\s*check`)) !== null;
@@ -30,7 +30,8 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     return;
   }
 
-  if (body.action === 'issue_comment' && !commentSummonsBot(body.comment.body)) {
+  if (body.action === 'created' && !commentSummonsBot(body.comment.body)) {
+    loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
     return;
   }
 
@@ -120,7 +121,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
     })
     .then(sideEffect(() => {
-      if (context.webhook.action === 'issue_comment') {
+      if (context.webhook.action === 'created') {
         return githubRequest(addRecheckComment(context), context.userToken);
       }
       return Promise.resolve('');

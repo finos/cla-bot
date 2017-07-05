@@ -70,6 +70,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
 
   if (body.action === 'created') {
     if (!commentSummonsBot(body.comment.body)) {
+      console.info('DEBUG', 'context', { context });
       loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
       return;
     } else {

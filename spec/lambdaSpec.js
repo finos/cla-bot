@@ -14,6 +14,7 @@ const installationToken = 'this-is-a-test';
 process.env.INTEGRATION_KEY = 'spec/test-key.pem';
 process.env.INTEGRATION_ID = 2208;
 process.env.INTEGRATION_ENABLED = true;
+process.env.BOT_NAME = 'cla-bot';
 
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify
@@ -98,7 +99,10 @@ describe('lambda function', () => {
       // the next is to download the commits for the PR
       'http://foo.com/user/repo/pulls/2/commits': {
         body: [
-          { author: { login: 'ColinEberhardt' } }
+          {
+            sha: '1234',
+            author: { login: 'ColinEberhardt' }
+          }
         ]
       },
       // next we add the relevant status
@@ -404,6 +408,50 @@ describe('lambda function', () => {
     });
   });
 
+  describe('bot summoned to re-check', () => {
+    it('should add a comment to indicate it was successfully summoned', (done) => {
+      // comments have a slightly different payload.
+      event = {
+        body: {
+          action: 'created',
+          issue: {
+            url: 'http://foo.com/user/repo/issues/2',
+            pull_request: {
+              url: 'http://foo.com/user/repo/pulls/2'
+            }
+          },
+          comment: {
+            body: '@cla-bot check'
+          },
+          repository: {
+            url: 'http://foo.com/user/repo'
+          },
+          installation: {
+            id: 1000
+          }
+        }
+      };
+
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('The cla-bot has been summoned, and re-checked this pull request!');
+          }
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+  });
+
   describe('contributor check configuration', () => {
     it('should support fetching of contributor list from a Github API URL', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
@@ -589,6 +637,25 @@ describe('lambda function', () => {
           expect(result.message).toEqual('CLA has not been signed by users @foo, added a comment to http://foo.com/user/repo/pulls/2');
           done();
         });
+    });
+  });
+});
+
+describe('lambda internals', () => {
+  const internals = require('../index').test;
+
+  describe('commentSummonsBot', () => {
+    it('should match comments with one space', () => {
+      expect(internals.commentSummonsBot('asdasd @cla-bot[bot] check dasd')).toBe(true);
+    });
+    it('should match comments without the bot suffix space', () => {
+      expect(internals.commentSummonsBot('asdasd @cla-bot check dasd')).toBe(true);
+    });
+    it('should match comments with multiple spaces', () => {
+      expect(internals.commentSummonsBot('@cla-bot[bot]    check')).toBe(true);
+    });
+    it('should not match comments without the correct text', () => {
+      expect(internals.commentSummonsBot('@cla-bot[bot]    chek')).toBe(false);
     });
   });
 });

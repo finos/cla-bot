@@ -42,11 +42,6 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     return;
   }
 
-  if (body.action === 'created' && !commentSummonsBot(body.comment.body)) {
-    loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
-    return;
-  }
-
   // adapt the console messages to add a correlation key
   const correlationKey = uuid();
   // we use console.info because AWS logs this, however, we can suppress console.info
@@ -71,6 +66,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   // PRs include the head sha, for comments we have to determine this from the commit history
   if (body.pull_request) {
     context.headSha = body.pull_request.head.sha;
+  }
+
+  if (body.action === 'created') {
+    if (!commentSummonsBot(body.comment.body)) {
+      loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
+      return;
+    } else {
+      console.info('INFO', 'The cla-bot has been summoned by a comment');
+    }
   }
 
   console.info('INFO', `Checking CLAs for pull request ${context.gitHubUrls.pullRequest}`);

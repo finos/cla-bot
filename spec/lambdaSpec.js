@@ -116,11 +116,10 @@ describe('lambda function', () => {
 
   afterEach(() => {
     mock.stop('request');
-    delete require.cache[require.resolve('../index')];
-    delete require.cache[require.resolve('../githubApi')];
-    delete require.cache[require.resolve('../requestAsPromise')];
-    delete require.cache[require.resolve('../contributionVerifier')];
-    delete require.cache[require.resolve('../installationToken')];
+    // remove the cached dependencies so that new mocks can be injected
+    Object.keys(require.cache).forEach((key) => {
+      delete require.cache[key];
+    });
   });
 
   // TODO: Test X-GitHub-Event header is a pull_request type
@@ -452,118 +451,6 @@ describe('lambda function', () => {
     });
   });
 
-  describe('contributor check configuration', () => {
-    it('should support fetching of contributor list from a Github API URL', (done) => {
-      const request = mockMultiRequest(merge(mockConfig, {
-        'http://raw.foo.com/user/repo/contents/.clabot': {
-          body: {
-            contributorListGithubUrl: 'https://api.github.com/repos/foo/bar/contents/.contributors'
-          }
-        },
-        'https://api.github.com/repos/foo/bar/contents/.contributors': {
-          body: {
-            download_url: 'http://raw.github.com/repos/foo/bar/contents/.contributors'
-          }
-        },
-        'http://raw.github.com/repos/foo/bar/contents/.contributors': {
-          body: ['bob']
-        },
-        'http://foo.com/user/repo/pulls/2/commits': {
-          body: [
-            // three commits, two from a user which is not a contributor
-            { author: { login: 'foo' } },
-            { author: { login: 'bob' } },
-            { author: { login: 'ColinEberhardt' } }
-          ]
-        }
-      }));
-
-      mock('request', request);
-      const lambda = require('../index');
-
-      lambda.handler(event, {},
-        (err, result) => {
-          expect(err).toBeNull();
-          expect(result.message).toEqual('CLA has not been signed by users @foo, @ColinEberhardt, added a comment to http://foo.com/user/repo/pulls/2');
-          done();
-        });
-    });
-
-    it('should support fetching of contributor list from a URL', (done) => {
-      const request = mockMultiRequest(merge(mockConfig, {
-        'http://raw.foo.com/user/repo/contents/.clabot': {
-          body: {
-            contributorListUrl: 'http://bar.com/contributors.txt'
-          }
-        },
-        'http://bar.com/contributors.txt': {
-          body: ['bob']
-        },
-        'http://foo.com/user/repo/pulls/2/commits': {
-          body: [
-            // three commits, two from a user which is not a contributor
-            { author: { login: 'foo' } },
-            { author: { login: 'bob' } },
-            { author: { login: 'ColinEberhardt' } }
-          ]
-        }
-      }));
-
-      mock('request', request);
-      const lambda = require('../index');
-
-      lambda.handler(event, {},
-        (err, result) => {
-          expect(err).toBeNull();
-          expect(result.message).toEqual('CLA has not been signed by users @foo, @ColinEberhardt, added a comment to http://foo.com/user/repo/pulls/2');
-          done();
-        });
-    });
-
-    it('should support fetching of contributors via a webhook', (done) => {
-      const request = mockMultiRequest(merge(mockConfig, {
-        'http://raw.foo.com/user/repo/contents/.clabot': {
-          body: {
-            contributorWebhook: 'http://bar.com/contributor'
-          }
-        },
-        'http://bar.com/contributor?checkContributor=foo': {
-          body: {
-            isContributor: false
-          }
-        },
-        'http://bar.com/contributor?checkContributor=bob': {
-          body: {
-            isContributor: true
-          }
-        },
-        'http://bar.com/contributor?checkContributor=ColinEberhardt': {
-          body: {
-            isContributor: false
-          }
-        },
-        'http://foo.com/user/repo/pulls/2/commits': {
-          body: [
-            // three commits, two from a user which is not a contributor
-            { author: { login: 'foo' } },
-            { author: { login: 'bob' } },
-            { author: { login: 'ColinEberhardt' } }
-          ]
-        }
-      }));
-
-      mock('request', request);
-      const lambda = require('../index');
-
-      lambda.handler(event, {},
-        (err, result) => {
-          expect(err).toBeNull();
-          expect(result.message).toEqual('CLA has not been signed by users @foo, @ColinEberhardt, added a comment to http://foo.com/user/repo/pulls/2');
-          done();
-        });
-    });
-  });
-
   describe('pull requests updated', () => {
     it('should label and add status check on pull requests and update stats for users with a signed CLA', (done) => {
       event.body.action = 'synchronize';
@@ -638,6 +525,105 @@ describe('lambda function', () => {
           done();
         });
     });
+  });
+});
+
+describe('contributionVerifier', () => {
+  afterEach(() => {
+    mock.stop('request');
+    // remove the cached dependencies so that new mocks can be injected
+    Object.keys(require.cache).forEach((key) => {
+      delete require.cache[key];
+    });
+  });
+
+  it('should support fetching of contributor list from a Github API URL', (done) => {
+    const config = {
+      contributorListGithubUrl: 'https://api.github.com/repos/foo/bar/contents/.contributors'
+    };
+
+    const request = mockMultiRequest({
+      'https://api.github.com/repos/foo/bar/contents/.contributors': {
+        body: {
+          download_url: 'http://raw.github.com/repos/foo/bar/contents/.contributors'
+        }
+      },
+      'http://raw.github.com/repos/foo/bar/contents/.contributors': {
+        body: ['bob', 'frank']
+      }
+    });
+
+    mock('request', request);
+    const verifier = require('../contributionVerifier');
+
+    verifier(config)(['bob'])
+      .then((nonContributors) => {
+        expect(nonContributors).toEqual([]);
+        done();
+      });
+  });
+
+  it('should support fetching of contributor list from a URL', (done) => {
+    const config = {
+      contributorListUrl: 'http://bar.com/contributors.txt'
+    };
+
+    const request = mockMultiRequest({
+      'http://bar.com/contributors.txt': {
+        body: ['bob']
+      }
+    });
+
+    mock('request', request);
+    const verifier = require('../contributionVerifier');
+
+    verifier(config)(['bob', 'billy'])
+      .then((nonContributors) => {
+        expect(nonContributors).toEqual(['billy']);
+        done();
+      });
+  });
+
+  it('should support contributor verification via webhook', (done) => {
+    const config = {
+      contributorWebhook: 'http://bar.com/contributor'
+    };
+
+    const request = mockMultiRequest({
+      'http://bar.com/contributor?checkContributor=foo': {
+        body: {
+          isContributor: false
+        }
+      },
+      'http://bar.com/contributor?checkContributor=bob': {
+        body: {
+          isContributor: true
+        }
+      }
+    });
+
+    mock('request', request);
+    const verifier = require('../contributionVerifier');
+
+    verifier(config)(['bob', 'foo'])
+      .then((nonContributors) => {
+        expect(nonContributors).toEqual(['foo']);
+        done();
+      });
+  });
+
+  it('should support an embedded contributor list', (done) => {
+    const config = {
+      contributors: ['billy']
+    };
+
+    const verifier = require('../contributionVerifier');
+
+    verifier(config)(['bob', 'billy'])
+      .then((nonContributors) => {
+        expect(nonContributors).toEqual(['bob']);
+        done();
+      });
   });
 });
 

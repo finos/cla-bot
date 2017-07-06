@@ -1,4 +1,5 @@
 const requestp = require('./requestAsPromise');
+const is = require('is_js');
 const { githubRequest, getFile } = require('./githubApi');
 
 const contributorArrayVerifier = contributors =>
@@ -26,10 +27,7 @@ const webhookVerifier = webhookUrl =>
   committers =>
     Promise.all(committers.map(username =>
       requestp({
-        url: webhookUrl,
-        qs: {
-          checkContributor: username
-        }
+        url: webhookUrl + username
       })
       .then(response => ({
         username,
@@ -44,8 +42,19 @@ const webhookVerifier = webhookUrl =>
 
 module.exports = (config) => {
   if (config.contributors) {
-    console.info('INFO', 'Checking contributors against the list supplied in the .clabot file');
-    return contributorArrayVerifier(config.contributors);
+    if (is.array(config.contributors)) {
+      console.info('INFO', 'Checking contributors against the list supplied in the .clabot file');
+      return contributorArrayVerifier(config.contributors);
+    } else if (is.url(config.contributors) && config.contributors.indexOf('api.github.com') !== -1) {
+      console.info('INFO', 'Checking contributors against the github URL supplied in the .clabot file');
+      return configFileFromGithubUrlVerifier(config.contributors);
+    } else if (is.url(config.contributors) && config.contributors.indexOf('?') !== -1) {
+      console.info('INFO', 'Checking contributors against the webhook supplied in the .clabot file');
+      return webhookVerifier(config.contributors);
+    } else if (is.url(config.contributors)) {
+      console.info('INFO', 'Checking contributors against the URL supplied in the .clabot file');
+      return configFileFromUrlVerifier(config.contributors);
+    }
   } else if (config.contributorListGithubUrl) {
     console.info('INFO', 'Checking contributors against the github URL supplied in the .clabot file');
     return configFileFromGithubUrlVerifier(config.contributorListGithubUrl);

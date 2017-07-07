@@ -699,6 +699,22 @@ describe('contributionVerifier', () => {
           done();
         });
     });
+
+    it('should throw an error if no configuration is supplied', () => {
+      const config = {};
+      const verifier = require('../contributionVerifier');
+      expect(() => verifier(config))
+        .toThrow(new Error('A mechanism for verifying contributors has not been specified'));
+    });
+
+    it('should throw an error if the configuration is invalid', () => {
+      const config = {
+        contributors: 'sausage'
+      };
+      const verifier = require('../contributionVerifier');
+      expect(() => verifier(config))
+        .toThrow(new Error('A mechanism for verifying contributors has not been specified'));
+    });
   });
 });
 

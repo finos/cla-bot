@@ -6,28 +6,12 @@ cla-bot is a GitHub bot for automation of Contributor Licence Agreements (CLAs).
 
 This project is very much a work-in-progress, so is not intended for production use just yet! However, as you can see from the roadmap below, it's not far off MVP.
 
-## Roadmap
-
-A bunch of things I'd like to do in order to make this an MVP.
-
-  - [x] Verify the users for each commit rather than the user that created the PR
-  - [x] Make the user whitelist configurable (it's hard-coded in `index.js` at the moment!)
-  - [x] Allow users to add a `.clabot` file to their repo to provide configuration (this could fix the above)
-  - [x] Automate deployment of the lambda
-  - [x] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
-  - [ ] Allow PRs to be re-checked after a user has signed a CLA (perhaps the bot could be 'pinged' via a comment?)
-  - [x] Turn this into a GitHub integration rather than a manually configured webhook
-  - [x] Allow insertion of usernames into custom message
-  - [x] Use the GitHub status API so that projects can add pre-merge checks for the CLA
-  - [ ] Create a super-awesome website that makes CLAs look fun and cool!
-  - [ ] Add semantic release
-  - [x] Define .clabot at Github org/user level
 
 ## Installing cla-bot
 
 *This documentation is not complete, but gives a good idea of where this project is heading*
 
-In order to use cla-bot, you need to enable the integration for your personal projects, or an organisation. Visit https://github.com/integration/cla-bot, click 'Install', and select the project that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
+In order to use cla-bot, you need to enable the GitHub App for your personal projects, or an organisation. Visit https://github.com/apps/cla-bot, click 'Install', and select the project that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
 
 When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository.
 
@@ -47,19 +31,19 @@ You can embed the contributors directly into the `.clabot` file as an array of G
 
 ### Via URL
 
-You can define the URL to resolve the contributors as list as an array of Github usernames (JSON format):  an http(s) URL that is loaded at each PRwebhook which is invoked for each committer:
+You can define the URL to resolve the contributors list as an array of Github usernames (JSON format):  an http(s) URL that is loaded at each PRwebhook which is invoked for each committer:
 
 ```
 {
-  "contributorListUrl: "http://foo.com/static/contributors"
+  "contributors: "http://foo.com/static/contributors"
 }
 ```
 
-You can also point to a Github hosted file, including private repositories (as it will use `GITHUB_ACCESS_TOKEN`, see below):
+You can also point to a GitHub hosted file, including private repositories (as it will use `GITHUB_ACCESS_TOKEN`, see below):
 
 ```
 {
-  "contributorListGithubUrl": "https://api.github.com/repos/foo/bar/contents/.contributors",
+  "contributors": "https://api.github.com/repos/foo/bar/contents/.contributors",
 }
 ```
 
@@ -69,7 +53,7 @@ You can supply a webhook which is invoked for each committer:
 
 ```
 {
-  "contributorWebhook: "http://foo.com/contributor"
+  "contributors: "http://foo.com/contributor?checkContributor="
 }
 ```
 

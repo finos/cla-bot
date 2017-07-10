@@ -1,4 +1,5 @@
 const requestp = require('./requestAsPromise');
+const is = require('is_js');
 const { githubRequest, getFile } = require('./githubApi');
 
 const contributorArrayVerifier = contributors =>
@@ -26,10 +27,7 @@ const webhookVerifier = webhookUrl =>
   committers =>
     Promise.all(committers.map(username =>
       requestp({
-        url: webhookUrl,
-        qs: {
-          checkContributor: username
-        }
+        url: webhookUrl + username
       })
       .then(response => ({
         username,
@@ -43,18 +41,31 @@ const webhookVerifier = webhookUrl =>
     });
 
 module.exports = (config) => {
-  if (config.contributors) {
-    console.info('INFO', 'Checking contributors against the list supplied in the .clabot file');
-    return contributorArrayVerifier(config.contributors);
-  } else if (config.contributorListGithubUrl) {
-    console.info('INFO', 'Checking contributors against the github URL supplied in the .clabot file');
-    return configFileFromGithubUrlVerifier(config.contributorListGithubUrl);
+  const configCopy = Object.assign({}, config);
+
+  // handle the 'legacy' configuration where each type had its own propery
+  if (configCopy.contributorListGithubUrl) {
+    configCopy.contributors = configCopy.contributorListGithubUrl;
   } else if (config.contributorListUrl) {
-    console.info('INFO', 'Checking contributors against the URL supplied in the .clabot file');
-    return configFileFromUrlVerifier(config.contributorListUrl);
+    configCopy.contributors = configCopy.contributorListUrl;
   } else if (config.contributorWebhook) {
-    console.info('INFO', 'Checking contributors against the webhook supplied in the .clabot file');
-    return webhookVerifier(config.contributorWebhook);
+    configCopy.contributors = configCopy.contributorWebhook;
+  }
+
+  if (configCopy.contributors) {
+    if (is.array(configCopy.contributors)) {
+      console.info('INFO', 'Checking contributors against the list supplied in the .clabot file');
+      return contributorArrayVerifier(configCopy.contributors);
+    } else if (is.url(configCopy.contributors) && configCopy.contributors.indexOf('api.github.com') !== -1) {
+      console.info('INFO', 'Checking contributors against the github URL supplied in the .clabot file');
+      return configFileFromGithubUrlVerifier(configCopy.contributors);
+    } else if (is.url(configCopy.contributors) && configCopy.contributors.indexOf('?') !== -1) {
+      console.info('INFO', 'Checking contributors against the webhook supplied in the .clabot file');
+      return webhookVerifier(configCopy.contributors);
+    } else if (is.url(configCopy.contributors)) {
+      console.info('INFO', 'Checking contributors against the URL supplied in the .clabot file');
+      return configFileFromUrlVerifier(configCopy.contributors);
+    }
   }
   throw new Error('A mechanism for verifying contributors has not been specified');
 };

@@ -92,43 +92,43 @@ There are various ways in which you can specify the list of contibutors:
 
 1. You can embed the contributors directly into the `.clabot` file as an array of GitHub usernames:
 
-```
+~~~json
 {
   "contributors": [ "frank", "bob", "sam" ]
 }
-```
+~~~
 
 2. You can specify a URL which returns the contributors list (as a JSON array)
 
-```
+~~~json
 {
   "contributors: "http://foo.com/static/contributors"
 }
-```
+~~~
 
 3. If the contributors URL uses the GitHub API, the bot will be authenticated, allowing it to access private repositories
 
-```
+~~~json
 {
   "contributors": "https://api.github.com/repos/foo/bar/contents/.contributors",
 }
-```
+~~~
 
 4. You can supply a webhook which has a querysting that is invoked for each committer:
 
-```
+~~~json
 {
   "contributors: "http://foo.com/contributor?checkContributor="
 }
-```
+~~~
 
 With each invocation, the `checkContributor` querystring parameter is used to supply the committer username. The webhook should return a JSON response that indicates whether the committer has signed a CLA:
 
-```
+~~~json
 {
   isContributor: true
 }
-```
+~~~
 
 ### Adding a custom message
 
@@ -136,11 +136,11 @@ If you wish to add a custom message, include a `message` property within the `.c
 
 For example:
 
-```
+~~~json
 {
   "message": "We require contributors to sign our Contributor License Agreement, and we don\"t have {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact @FriendlyAdmin to get yourself added."
 }
-```
+~~~
 
 It is good practice to include details of who to contact in order to go ahead with the CLA signing process.
 
@@ -148,17 +148,17 @@ It is good practice to include details of who to contact in order to go ahead wi
 
 If a PR is opened where all the contributors have signed the CLA, it is labelled with `cla-signed`. You can configure this behaviour as follows:
 
-```
+~~~json
 {
   "label": "my-custom-label"
 }
-```
+~~~
 
 ## Development
 
 You know ... the usual ...
 
-~~~
+~~~console
 npm install
 ~~~
 
@@ -179,20 +179,3 @@ Run the bot as follows:
 ```
 $ npm run execute  
 ```
-
-If everything goes to plan, you'll see the HTTP requests logged as follows:
-
-```
-Checking CLAs for PR https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/14
-API Request https://api.github.com/repos/ColinEberhardt/clabot-test/contents/.clabot {}
-API Request https://raw.githubusercontent.com/ColinEberhardt/clabot-test/master/.clabot {}
-API Request https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/14/commits {}
-API Request https://raw.githubusercontent.com/ColinEberhardt/clabot-test/master/.contributors {}
-API Request https://api.github.com/repos/ColinEberhardt/clabot-test/issues/14/labels [ 'cla-signed' ]
-API Request https://api.github.com/repos/ColinEberhardt/clabot-test/statuses/462eecdd0d4c822e64dafc774974f21e91ddd305 { state: 'success', context: 'verification/cla-signed' }
-callback null { message: 'added label cla-signed to https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/14' }
-Success:
-{"message":"added label cla-signed to https://api.github.com/repos/ColinEberhardt/clabot-test/pulls/14"}
-```
-
-Magic! You can now play around with adding / removing contributors, checking that the bot functions correctly.

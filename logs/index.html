@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<title>cla-bot log information</title>
+
+<link rel="stylesheet" href="bootstrap.min.css">
+
+<style>
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+li:nth-child(even) {
+  background-color: #efefef;
+}
+li {
+  padding: 5px;
+}
+li > a {
+  float: right;
+}
+.level {
+  font-weight: bold;
+}
+.level-DEBUG {
+  opacity: 0.5;
+}
+.level-ERROR > .level {
+  color: red;
+}
+</style>
+
+<div class="container">
+  <h1>cla-bot logs</h1>
+  <div id="log-output">loading ...</div>
+</div>
+
+<script src="jquery-3.2.1.min.js"></script>
+<script src="handlebars-v4.0.10.js"></script>
+<script src="bootstrap.min.js"></script>
+
+<script id="log-template" type="text/x-handlebars-template">
+  <ul>
+    {{#each .}}
+      <li class='level-{{level}}'>
+        <span class='level'>{{level}}:</span>
+        {{trim message}}
+        {{#if detail}}
+          <a href='#' data-toggle="collapse" data-target="#collapse-{{@index}}">expand</a>
+          <pre class="collapse" id="collapse-{{@index}}">{{{json detail}}}'</pre>
+        {{/if}}
+      </li>
+    {{/each}}
+  </ul>
+</script>
+
+<script id="no-log-template" type="text/x-handlebars-template">
+  <p>The cla-bot was unable to find the log output for the given pull request. Please try again shortly, sometimes logging
+    information take a little while to be accessible.</p>
+</script>
+
+<script>
+Handlebars.registerHelper('json', function(context) {
+  return JSON.stringify(context, null, 2).replace(/'/g, "&#39;");
+});
+
+Handlebars.registerHelper('trim', function(context) {
+  if (typeof context === 'string') {
+    if (context.length > 100) {
+      return new Handlebars.SafeString(context.substring(0, 100) + '...')
+    } else {
+      return context;
+    }
+  } else {
+    return '';
+  }
+});
+
+var query = location.search.slice(1).split('=');
+var correlationKey = query[1];
+
+$.get('https://9aq9pcew45.execute-api.us-east-2.amazonaws.com/prod',
+  { correlationKey: correlationKey })
+  .done(function(res) {
+    console.log(res);
+    if (res.length === 0) {
+      var source = $("#no-log-template").html();
+      var template = Handlebars.compile(source);
+      $("#log-output").html(template(res));
+    } else {
+      var source = $("#log-template").html();
+      var template = Handlebars.compile(source);
+      $("#log-output").html(template(res));
+      $('.collapse').collapse('hide');
+    }
+  });
+</script>

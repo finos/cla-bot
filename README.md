@@ -44,7 +44,7 @@ If a committer signs the CLA and you wish to have a pull request re-check, you c
 
 ## Installing cla-bot
 
-The cla-bot is a GitHub App making it very easy to install for individual projects, or entire organizations. You don't have to host anything yourself in order to run the bot, you simply provide configuration. To install the bot, visit https://github.com/apps/cla-bot, click 'Install', and select the project(s) that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
+The cla-bot is a GitHub App making it very easy to install for individual projects, or entire organizations. You don't have to host anything yourself in order to run the bot, you simply provide configuration. To install the bot, visit [https://github.com/apps/cla-bot](https://github.com/apps/cla-bot), click 'Install', and select the project(s) that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
 
 When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository. There are various configuration options available for specifying how contributors are verified, with the most simple being a list of GitHub accounts for contributors with a CLA.
 
@@ -88,9 +88,9 @@ The `.clabot` file has four properties:
 
 ### contributors option
 
-There are various ways in which you can specify the list of contibutors:
+There are various ways in which you can specify the list of contributors:
 
-1. You can embed the contributors directly into the `.clabot` file as an array of GitHub usernames:
+You can embed the contributors directly into the `.clabot` file as an array of GitHub usernames:
 
 ~~~json
 {
@@ -98,27 +98,27 @@ There are various ways in which you can specify the list of contibutors:
 }
 ~~~
 
-2. You can specify a URL which returns the contributors list (as a JSON array)
+You can specify a URL which returns the contributors list (as a JSON array)
 
 ~~~json
 {
-  "contributors: "http://foo.com/static/contributors"
+  "contributors": "http://foo.com/static/contributors"
 }
 ~~~
 
-3. If the contributors URL uses the GitHub API, the bot will be authenticated, allowing it to access private repositories
+If the contributors URL uses the GitHub API, the bot will be authenticated, allowing it to access private repositories
 
 ~~~json
 {
-  "contributors": "https://api.github.com/repos/foo/bar/contents/.contributors",
+  "contributors": "https://api.github.com/repos/foo/bar/contents/.contributors"
 }
 ~~~
 
-4. You can supply a webhook which has a querysting that is invoked for each committer:
+You can supply a webhook which has a querysting that is invoked for each committer:
 
 ~~~json
 {
-  "contributors: "http://foo.com/contributor?checkContributor="
+  "contributors": "http://foo.com/contributor?checkContributor="
 }
 ~~~
 
@@ -126,7 +126,7 @@ With each invocation, the `checkContributor` querystring parameter is used to su
 
 ~~~json
 {
-  isContributor: true
+  "isContributor": "true"
 }
 ~~~
 

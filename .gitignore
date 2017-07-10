@@ -1,6 +1,8 @@
 node_modules
 build
 npm-debug.log
+Gemfile.lock
+_site
 
 # don't commit the file that simulates the AWS environment variables
 deploy.env

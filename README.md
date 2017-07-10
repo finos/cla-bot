@@ -1,43 +1,96 @@
 # cla-bot
 
-cla-bot is a GitHub bot for automation of Contributor Licence Agreements (CLAs). It checks whether contributors have signed an agreement, adding labels to PRs if they have, or prompting for signature if they have not.
+cla-bot is a GitHub Application for automation of Contributor Licence Agreements (CLAs). It checks whether contributors have signed an agreement, adding labels to PRs if they have, or prompting for signature if they have not.
 
-## Status
+This bot has the following features:
+ - Easy integration on projects or whole organisation as a GitHub App
+ - Automatically checks every pull request and every commit
+ - Pull requests are re-check on each push
+ - The approved contributor list can be maintained in various ways including JSON files or a webhook
+ - A re-check for a pull request can be triggered
+ - Uses labels and status checks to make the process visible
+ - Provides a fully-hosted solution, you don't have to maintain your own bit installation
+ - You can provide templates for the various messages this bot posts
 
-This project is very much a work-in-progress, so is not intended for production use just yet! However, as you can see from the roadmap below, it's not far off MVP.
+## What is a CLA?
 
-## Roadmap
+If you maintain an open source project you'll likely have selected an open source licence that governs your project. This provides an implicit agreement for contributors to your project, whereas a Contributor Licence Agreement (CLA) makes these terms explicit and provides a record of these agreements.
 
-A bunch of things I'd like to do in order to make this an MVP.
+As described via [Wikipedia](https://en.wikipedia.org/wiki/Contributor_License_Agreement)
 
-  - [x] Verify the users for each commit rather than the user that created the PR
-  - [x] Make the user whitelist configurable (it's hard-coded in `index.js` at the moment!)
-  - [x] Allow users to add a `.clabot` file to their repo to provide configuration (this could fix the above)
-  - [x] Automate deployment of the lambda
-  - [x] Make the mechanism for checking that a user has signed a CLA configurable, e.g. the lambda could invoke a HTTP endpoint to check if a user has a signed CLA
-  - [ ] Allow PRs to be re-checked after a user has signed a CLA (perhaps the bot could be 'pinged' via a comment?)
-  - [x] Turn this into a GitHub integration rather than a manually configured webhook
-  - [x] Allow insertion of usernames into custom message
-  - [x] Use the GitHub status API so that projects can add pre-merge checks for the CLA
-  - [ ] Create a super-awesome website that makes CLAs look fun and cool!
-  - [ ] Add semantic release
-  - [x] Define .clabot at Github org/user level
+> The purpose of a CLA is to ensure that the guardian of a project's outputs has the necessary ownership or grants of rights over all contributions to allow them to distribute under the chosen license.
+
+You can find example CLAs from [GitHub](https://cla.github.com/), [Facebook](https://code.facebook.com/cla), [Microsoft](https://cla.microsoft.com/), [JSFoundation](https://js.foundation/CLA) and many other projects.
+
+## What does cla-bot do?
+
+Adding a CLA to your project workflow can add quite a bit of overhead. For each pull request you need to ensure that each committer has signed your CLA before merging. For small projects this can probably be done manually, but for larger projects you probably want to automate this process.
+
+As you can see from the above examples CLAs differ between projects, and the mechanics for signing them also differ. For that reason this bot doesn't automate that part of the process. However, the process of checking pull requests against a list of (approved) contributors is what this bot automates.
+
+For projects that use the cla-bot, when a pull request is opened, the commits are checked to determine the CLA status for each committer. If any fail the check, the bot posts a (customisable) comment, prompting them to get in touch and arrange a CLA:
+
+![cla bot comment](screenshots/bot-comment.png)
+
+If the checks pass, a (configurable) label is added to the pull request:
+
+![cla bot label](screenshots/bot-label.png)
+
+In each case the pull request status is set to a pass or fail. It's a good idea to make the `verification/cla-signed` status a required status check so that it must pass before pull requests are merged.
+
+If a committer signs the CLA and you wish to have a pull request re-check, you can request this posting a comment that contains the text `@cla-bot check`:
+
+![cla bot label](screenshots/bot-recheck.png)
 
 ## Installing cla-bot
 
-*This documentation is not complete, but gives a good idea of where this project is heading*
+The cla-bot is a GitHub App making it very easy to install for individual projects, or entire organizations. You don't have to host anything yourself in order to run the bot, you simply provide configuration. To install the bot, visit https://github.com/apps/cla-bot, click 'Install', and select the project(s) that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
 
-In order to use cla-bot, you need to enable the integration for your personal projects, or an organisation. Visit https://github.com/integration/cla-bot, click 'Install', and select the project that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
+When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository. There are various configuration options available for specifying how contributors are verified, with the most simple being a list of GitHub accounts for contributors with a CLA.
 
-When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository.
+You might want to try out the bot in a test repo. Here's an example `.clabot` file:
 
-The `.clabot` will be automatically resolved in the root project folder (for example, `https://github.com/foo/bar/blob/master/.clabot`), or in a Github repository called `clabot-config` that exists in the same user/organisation (for example, `https://github.com/foo/clabot-config/blob/master/.clabot`); the latter takes precedence.
+~~~json
+{
+  "contributors": ["YourUsername"]
+}
+~~~
 
-There are three possible configurations:
+Once added, try creating a pull request to see the bot in action.
 
-### Embedded contributor list
+All of the configuration relating to this bot is performed via the `.clabot` file.
 
-You can embed the contributors directly into the `.clabot` file as an array of GitHub usernames:
+## Configuration options
+
+### .clabot resolution
+
+The `.clabot` is automatically resolved in the root project folder (for example this project resolves the following file, `https://github.com/ColinEberhardt/cla-bot/.clabot`). If you have multiple repositories within the same organization, or user account, that have the same contributors, you can create a single configuration by adding a project called `clabot-config`. For example, for my personal projects I could configure the bot via `https://github.com/ColinEberhardt/cla-config/.clabot`.
+
+Note, if you do not want the list of contributors to be public, the `cla-config` project can be private.
+
+### configuration schema
+
+The `.clabot` file has four properties:
+
+~~~json
+{
+  "contributors": "...",
+  "message": "...",
+  "label": "...",
+  "recheckComment": "..."
+}
+~~~
+
+ - `contributors` - details the contributors with signed CLAs, more on this later.
+ - `message` (optional) - the message that the bot adds as a comment if an of the committers for a pull request have not signed a CLA.
+ - `label` (optional) - the label applied to a pull request if all committers have a signed CLA.
+ - `recheckComment` (optional) - the comment added when the bot is manually requested to re-check a pull request.
+
+### contributors option
+
+There are various ways in which you can specify the list of contibutors:
+
+1. You can embed the contributors directly into the `.clabot` file as an array of GitHub usernames:
 
 ```
 {
@@ -45,31 +98,27 @@ You can embed the contributors directly into the `.clabot` file as an array of G
 }
 ```
 
-### Via URL
-
-You can define the URL to resolve the contributors as list as an array of Github usernames (JSON format):  an http(s) URL that is loaded at each PRwebhook which is invoked for each committer:
+2. You can specify a URL which returns the contributors list (as a JSON array)
 
 ```
 {
-  "contributorListUrl: "http://foo.com/static/contributors"
+  "contributors: "http://foo.com/static/contributors"
 }
 ```
 
-You can also point to a Github hosted file, including private repositories (as it will use `GITHUB_ACCESS_TOKEN`, see below):
+3. If the contributors URL uses the GitHub API, the bot will be authenticated, allowing it to access private repositories
 
 ```
 {
-  "contributorListGithubUrl": "https://api.github.com/repos/foo/bar/contents/.contributors",
+  "contributors": "https://api.github.com/repos/foo/bar/contents/.contributors",
 }
 ```
 
-### Via a webhook
-
-You can supply a webhook which is invoked for each committer:
+4. You can supply a webhook which has a querysting that is invoked for each committer:
 
 ```
 {
-  "contributorWebhook: "http://foo.com/contributor"
+  "contributors: "http://foo.com/contributor?checkContributor="
 }
 ```
 
@@ -89,7 +138,6 @@ For example:
 
 ```
 {
-  "contributors": [ "frank", "bob", "sam" ],
   "message": "We require contributors to sign our Contributor License Agreement, and we don\"t have {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact @FriendlyAdmin to get yourself added."
 }
 ```
@@ -148,21 +196,3 @@ Success:
 ```
 
 Magic! You can now play around with adding / removing contributors, checking that the bot functions correctly.
-
-### Deploying as a webhook
-
-This bot is hosted on AWS, with the deployment managed via the `.travis.yml` file. This uses the AWS tokens for my account, which are encrypted by travis so will of course not work on your fork!
-
-If you want to deploy to your own AWS, you'll either have to update this file with your own credentials, or, for ad-hoc deployment you can use the following:
-
-```
-npm run deploy
-```
-
-This uses [node-lambda](https://github.com/motdotla/node-lambda) for deployment. You'll have to add your AWS access key and secret to a `.env` file as per the node-lambda instructions. This method of deployment also sets up the lambda environment variables as defined in `deploy.env`. With travis, you have to add environment variables manually.
-
-Once deployed, you'll also need to set up an API Gateway to allow HTTP access to your lambda. Good luck with that, it's a barrel of laughs!
-
-### Deploying as an integration
-
-TODO!

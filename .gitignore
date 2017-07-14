@@ -5,7 +5,7 @@ Gemfile.lock
 _site
 
 # don't commit the file that simulates the AWS environment variables
-deploy.env
+dev/.env
 
 # I don't want to commit the private RSA keys for my bot!
 # see: https://docs.travis-ci.com/user/encrypting-files/#Encrypting-multiple-files

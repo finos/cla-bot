@@ -46,7 +46,7 @@ If a committer signs the CLA and you wish to have a pull request re-check, you c
 
 The cla-bot is a GitHub App making it very easy to install for individual projects, or entire organizations. You don't have to host anything yourself in order to run the bot, you simply provide configuration. To install the bot, visit [https://github.com/apps/cla-bot](https://github.com/apps/cla-bot), click 'Install', and select the project(s) that you want to enable cla-bot on. Once enabled, cla-bot will be informed whenever a pull request is opened or updated on any of the selected repositories.
 
-When a pull request opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository. There are various configuration options available for specifying how contributors are verified, with the most simple being a list of GitHub accounts for contributors with a CLA.
+When a pull request is opened, cla-bot checks all the committers to ensure that they have a signed CLA. In order for cla-bot to perform this check you need to add a `.clabot` file to your repository. There are various configuration options available for specifying how contributors are verified, with the most simple being a list of GitHub accounts for contributors with a CLA.
 
 You might want to try out the bot in a test repo. Here's an example `.clabot` file:
 
@@ -167,10 +167,10 @@ npm install
 For most end users cla-bot will be added to a project as an integration, this provides the simplest integration experience. However, this is also the most complex from a set-up perspective! In order to simplify things, in development, you can run the bot as a simple webhook integration.
 
 1. Create a [personal access token](https://github.com/settings/tokens) for the account that you want to run the bot as.
-2. Edit `deploy.env.example`, renaming to `deploy.env`, and add the personal access token generated above to `GITHUB_ACCESS_TOKEN`.
+2. Edit `dev/.env.example`, renaming to `dev/.env`, and add the personal access token generated above to `GITHUB_ACCESS_TOKEN`.
 3. Ensure `INTEGRATION_ENABLED` is set to false.
 4. Find a suitable repo to test against, and add a `.clabot` file.
-5. The `event.json` provides an example webhook (with most of the fields removed) that the bot receives when a PR is opened. Edit this file so that it points to a PR in your test repository.
+5. The `dev/event.json` provides an example webhook (with most of the fields removed) that the bot receives when a PR is opened. Edit this file so that it points to a PR in your test repository.
 6. The bot comments, adds labels, and updates the status of commits. In order to do this it needs write access to the repo. Note that the integration only requests the minimal permissions required to perform these functions. Either the repo you are using to test against in (4) needs to be owned by the user from (1), or you need to add the user as a collaborator or team member.
 7. You're ready to go!!!
 

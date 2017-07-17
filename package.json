@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "execute": "node dev/index.js",
+    "execute": "node cla-bot/dev/index.js",
     "test": "npm run lint && jasmine",
-    "lint": "eslint --ignore-path .gitignore \"*.js\" \"spec/*.js\""
+    "lint": "eslint --ignore-path .gitignore \"cla-bot/*.js\" \"spec/*.js\""
   },
   "author": "",
   "license": "ISC",

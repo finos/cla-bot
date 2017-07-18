@@ -2,7 +2,7 @@ language: node_js
 node_js:
 - '6'
 
-before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv -in secrets.tar.enc -out secrets.tar -d ; tar xvf secrets.tar ; fi"
+before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv -in secrets.tar.enc -out secrets.tar -d ; tar xvf secrets.tar -C cla-bot; fi"
 
 deploy:
 - provider: lambda
@@ -13,6 +13,7 @@ deploy:
   handler_name: handler
   access_key_id: AKIAJD3WVQTATNQACA6Q
   timeout: 15
+  zip: cla-bot
   on:
     branch: master
   secret_access_key:
@@ -25,6 +26,7 @@ deploy:
   handler_name: handler
   access_key_id: AKIAJD3WVQTATNQACA6Q
   timeout: 15
+  zip: cla-bot
   on:
     branch: develop
   secret_access_key:

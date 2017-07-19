@@ -1,11 +1,12 @@
 const fs = require('fs');
+const path = require('path');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
 const uuid = require('uuid/v1');
 const is = require('is_js');
 const { githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
 
-const defaultConfig = JSON.parse(fs.readFileSync('default.json'));
+const defaultConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'default.json')));
 
 // a token value used to indicate that an organisation-level .clabot file was not found
 const noOrgConfig = false;

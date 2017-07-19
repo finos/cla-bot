@@ -1,0 +1,13 @@
+{
+  "name": "cla-bot-logs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.77.0"
+  }
+}

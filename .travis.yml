@@ -31,3 +31,29 @@ deploy:
     branch: develop
   secret_access_key:
     secure: cZeI2nQCZqll2S3fOTlpWJzTLhYT/DxveLnTCttCeYaZAVBr8i7KkkHxu1mxF03zopt2CNaEjVBCwp/Ixa4371Rllh4jhvq22/K7u+yxVzMFrwj14w3zW5QE+ljdLYvOrDXE6SgVSg9e+swlkgTxX6PZFf5iCb14Z1z2zYiVU2dYR7vvUKWVam5m8vv87z9AgSH3QG6y3zH+Zv5rPVmW/TD2DUBhzCTW1jopuSmxv5p8VVAuk8ga5xm8JEmMhiS2zcJAhxsmg4vb0VqDTZxu3oqRR0x09H+xJvoEkIrJ6e9FHseWLLqMb8ZXvfTehg2msBDBVHphBaoZYotLXcrI9R+pOcUzcVSut0JGGsNW8dYCCeiSdVOjGy304HIBal9LmCw0r7u51brceYzduY3lHuPlOwLECjELZxg72MTJwDRjBjNNKPrifuFQKz1MUBm2HMPwLpokQy74+TtTLxvVAHzjt3HBkFbZdYoMa8toRRh9/2HseOrPucNgIGYn8qtOcIxnqd9x8yBtu/XrXo1F3xCK60R52PQX+W4aVVTTa/FHb5SJIkn4dBWgi5dETOwtLmaNypL73BiC5hPTuNjNoWzdezhc/aFGijdWzbeitz0xInznI0FxqhzRl5TYbOWhI8IbT9vT/7UBCxyUP9c5CN/steTvot9yfCXJfFjGAFQ=
+- provider: lambda
+  function_name: clabot-logs-dev
+  region: us-east-2
+  role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+  runtime: nodejs6.10
+  handler_name: handler
+  access_key_id: AKIAJD3WVQTATNQACA6Q
+  timeout: 15
+  zip: cla-bot-logs
+  on:
+    branch: develop
+  secret_access_key:
+    secure: cZeI2nQCZqll2S3fOTlpWJzTLhYT/DxveLnTCttCeYaZAVBr8i7KkkHxu1mxF03zopt2CNaEjVBCwp/Ixa4371Rllh4jhvq22/K7u+yxVzMFrwj14w3zW5QE+ljdLYvOrDXE6SgVSg9e+swlkgTxX6PZFf5iCb14Z1z2zYiVU2dYR7vvUKWVam5m8vv87z9AgSH3QG6y3zH+Zv5rPVmW/TD2DUBhzCTW1jopuSmxv5p8VVAuk8ga5xm8JEmMhiS2zcJAhxsmg4vb0VqDTZxu3oqRR0x09H+xJvoEkIrJ6e9FHseWLLqMb8ZXvfTehg2msBDBVHphBaoZYotLXcrI9R+pOcUzcVSut0JGGsNW8dYCCeiSdVOjGy304HIBal9LmCw0r7u51brceYzduY3lHuPlOwLECjELZxg72MTJwDRjBjNNKPrifuFQKz1MUBm2HMPwLpokQy74+TtTLxvVAHzjt3HBkFbZdYoMa8toRRh9/2HseOrPucNgIGYn8qtOcIxnqd9x8yBtu/XrXo1F3xCK60R52PQX+W4aVVTTa/FHb5SJIkn4dBWgi5dETOwtLmaNypL73BiC5hPTuNjNoWzdezhc/aFGijdWzbeitz0xInznI0FxqhzRl5TYbOWhI8IbT9vT/7UBCxyUP9c5CN/steTvot9yfCXJfFjGAFQ=
+- provider: lambda
+  function_name: clabot-logs-prod
+  region: us-east-2
+  role: arn:aws:iam::462989979267:role/service-role/execute_my_lambda
+  runtime: nodejs6.10
+  handler_name: handler
+  access_key_id: AKIAJD3WVQTATNQACA6Q
+  timeout: 15
+  zip: cla-bot-logs
+  on:
+    branch: master
+  secret_access_key:
+    secure: cZeI2nQCZqll2S3fOTlpWJzTLhYT/DxveLnTCttCeYaZAVBr8i7KkkHxu1mxF03zopt2CNaEjVBCwp/Ixa4371Rllh4jhvq22/K7u+yxVzMFrwj14w3zW5QE+ljdLYvOrDXE6SgVSg9e+swlkgTxX6PZFf5iCb14Z1z2zYiVU2dYR7vvUKWVam5m8vv87z9AgSH3QG6y3zH+Zv5rPVmW/TD2DUBhzCTW1jopuSmxv5p8VVAuk8ga5xm8JEmMhiS2zcJAhxsmg4vb0VqDTZxu3oqRR0x09H+xJvoEkIrJ6e9FHseWLLqMb8ZXvfTehg2msBDBVHphBaoZYotLXcrI9R+pOcUzcVSut0JGGsNW8dYCCeiSdVOjGy304HIBal9LmCw0r7u51brceYzduY3lHuPlOwLECjELZxg72MTJwDRjBjNNKPrifuFQKz1MUBm2HMPwLpokQy74+TtTLxvVAHzjt3HBkFbZdYoMa8toRRh9/2HseOrPucNgIGYn8qtOcIxnqd9x8yBtu/XrXo1F3xCK60R52PQX+W4aVVTTa/FHb5SJIkn4dBWgi5dETOwtLmaNypL73BiC5hPTuNjNoWzdezhc/aFGijdWzbeitz0xInznI0FxqhzRl5TYbOWhI8IbT9vT/7UBCxyUP9c5CN/steTvot9yfCXJfFjGAFQ=

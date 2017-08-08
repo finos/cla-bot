@@ -126,7 +126,6 @@ With each invocation, the `checkContributor` querystring parameter is used to su
 
 ~~~json
 {
-  "username": "committer-username",
   "isContributor": "true"
 }
 ~~~

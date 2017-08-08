@@ -27,7 +27,8 @@ const webhookVerifier = webhookUrl =>
   committers =>
     Promise.all(committers.map(username =>
       requestp({
-        url: webhookUrl + username
+        url: webhookUrl + username,
+        json: true
       })
       .then(response => ({
         username,

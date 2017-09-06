@@ -132,7 +132,7 @@ With each invocation, the `checkContributor` querystring parameter is used to su
 
 ### Adding a custom message
 
-If you wish to add a custom message, include a `message` property within the `.cla-bot` file. This can optionally include a `{{usersWithoutCLA}}` token which is expanded out to the names of the contributors who have not signed a CLA.
+If you wish to add a custom message, include a `message` property within the `.cla-bot` file. This can optionally include a `{% raw %}{{usersWithoutCLA}}{% endraw %}` token which is expanded out to the names of the contributors who have not signed a CLA.
 
 For example:
 

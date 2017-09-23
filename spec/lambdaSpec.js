@@ -110,7 +110,9 @@ describe('lambda function', () => {
       // and optionally add a comment
       'http://foo.com/user/repo/issues/2/comments': {},
       // or a label
-      'http://foo.com/user/repo/issues/2/labels': {}
+      'http://foo.com/user/repo/issues/2/labels': {
+        body: []
+      }
     };
 
     // remove the cached dependencies so that new mocks can be injected
@@ -291,13 +293,50 @@ describe('lambda function', () => {
         },
         'http://foo.com/user/repo/issues/2/labels': {
           verifyRequest: (opts) => {
-            expect(opts.body).toEqual(['cla-signed']);
-          }
+            if (opts.method === 'POST') {
+              expect(opts.body).toEqual(['cla-signed']);
+            }
+          },
+          body: []
         },
         'http://foo.com/user/repo/pulls/2/commits': {
           body: [
             // two commits, both from contributors
             { author: { login: 'ColinEberhardt' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../cla-bot/index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
+    it('should not set a label is it is already present', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('success');
+            expect(opts.body.context).toEqual('verification/cla-signed');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/labels': {
+          verifyRequest: (opts) => {
+            if (opts.method === 'POST') {
+              fail('A label already exists, so should not be set');
+            }
+          },
+          body: [{ name: 'cla-signed' }]
+        },
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
             { author: { login: 'ColinEberhardt' } }
           ]
         }
@@ -460,8 +499,11 @@ describe('lambda function', () => {
         },
         'http://foo.com/user/repo/issues/2/labels': {
           verifyRequest: (opts) => {
-            expect(opts.body).toEqual(['cla-signed']);
-          }
+            if (opts.method === 'POST') {
+              expect(opts.body).toEqual(['cla-signed']);
+            }
+          },
+          body: []
         },
         'http://foo.com/user/repo/pulls/2/commits': {
           body: [
@@ -494,9 +536,12 @@ describe('lambda function', () => {
         },
         'http://foo.com/user/repo/issues/2/labels': {
           verifyRequest: (opts) => {
-            expect(opts.body).toEqual(['cla-signed']);
-            expect(opts.method).toEqual('DELETE');
-          }
+            if (opts.method !== 'GET') {
+              expect(opts.body).toEqual(['cla-signed']);
+              expect(opts.method).toEqual('DELETE');
+            }
+          },
+          body: []
         },
         'http://foo.com/user/repo/issues/2/comments': {
           verifyRequest: (opts) => {

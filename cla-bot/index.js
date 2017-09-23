@@ -8,6 +8,10 @@ const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel,
 
 const defaultConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'default.json')));
 
+const sortUnique = arr =>
+     arr.sort((a, b) => a - b)
+        .filter((value, index, self) => self.indexOf(value, index + 1) === -1);
+
 // a token value used to indicate that an organisation-level .clabot file was not found
 const noOrgConfig = false;
 
@@ -127,7 +131,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }
-      const committers = commits.map(c => c.author.login);
+      const committers = sortUnique(commits.map(c => c.author.login));
       const verifier = contributionVerifier(context.config);
       return verifier(committers, context.userToken);
     })

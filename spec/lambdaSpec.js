@@ -409,6 +409,29 @@ describe('lambda function', () => {
         });
     });
 
+    it('should not report duplicate names', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            // three commits, two from a user which is not a contributor
+            { author: { login: 'bob' } },
+            { author: { login: 'bob' } },
+            { author: { login: 'ColinEberhardt' } }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../cla-bot/index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('CLA has not been signed by users @bob, added a comment to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
     it('should allow configuration of the pull request comment to include non-cla signed contributors', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/pulls/2/commits': {

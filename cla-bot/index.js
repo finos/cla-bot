@@ -4,9 +4,13 @@ const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
 const uuid = require('uuid/v1');
 const is = require('is_js');
-const { githubRequest, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
+const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
 
 const defaultConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'default.json')));
+
+const sortUnique = arr =>
+     arr.sort((a, b) => a - b)
+        .filter((value, index, self) => self.indexOf(value, index + 1) === -1);
 
 // a token value used to indicate that an organisation-level .clabot file was not found
 const noOrgConfig = false;
@@ -127,14 +131,22 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }
-      const committers = commits.map(c => c.author.login);
+      const committers = sortUnique(commits.map(c => c.author.login));
       const verifier = contributionVerifier(context.config);
       return verifier(committers, context.userToken);
     })
     .then((nonContributors) => {
       if (nonContributors.length === 0) {
         console.info('INFO', 'All contributors have a signed CLA, adding success status to the pull request and a label');
-        return githubRequest(addLabel(context), context.userToken)
+        return githubRequest(getLabels(context), context.userToken, 'GET')
+          .then((labels) => {
+            // check whether this label already exists
+            if (!labels.some(l => l.name === context.config.label)) {
+              githubRequest(addLabel(context), context.userToken);
+            } else {
+              console.info('INFO', `The pull request already has the label ${context.config.label}`);
+            }
+          })
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => `added label ${context.config.label} to ${context.gitHubUrls.pullRequest}`);
       } else {

@@ -8,14 +8,14 @@ const getOrgConfigUrl = (repositoryUrl) => {
   return ghUrl;
 };
 
-exports.githubRequest = (opts, token) =>
+exports.githubRequest = (opts, token, method = 'POST') =>
     requestp(Object.assign({}, {
       json: true,
       headers: {
         Authorization: `token ${token}`,
         'User-Agent': 'github-cla-bot'
       },
-      method: 'POST'
+      method
     }, opts));
 
 exports.getOrgConfig = ({ webhook }) => ({
@@ -36,6 +36,10 @@ exports.getFile = body => ({
 exports.addLabel = ({ gitHubUrls, config }) => ({
   url: `${gitHubUrls.issue}/labels`,
   body: [config.label]
+});
+
+exports.getLabels = ({ gitHubUrls }) => ({
+  url: `${gitHubUrls.issue}/labels`
 });
 
 exports.deleteLabel = ({ gitHubUrls, config }) => ({

@@ -2,9 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
-const uuid = require('uuid/v1');
 const is = require('is_js');
+const uuid = require('uuid/v4');
+const gh = require('parse-github-url');
 const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
+const logger = require('./logger');
 
 const defaultConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'default.json')));
 
@@ -37,6 +39,12 @@ const commentSummonsBot = comment =>
   comment.match(new RegExp(`@${process.env.BOT_NAME}(\\[bot\\])?\\s*check`)) !== null;
 
 exports.handler = ({ body }, lambdaContext, callback) => {
+  // adapt the console messages to add a correlation key
+  const correlationKey = uuid();
+  console.info = logger(console.info, correlationKey);
+
+  console.info('DEBUG', 'clabot lambda invoked by webhook', gh(body.repository.url));
+
   const loggingCallback = (error, message) => {
     console.info('DEBUG', 'integration webhook callback response', { error, message });
     callback(error, message);
@@ -46,21 +54,6 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     loggingCallback(null, { message: `ignored action of type ${body.action}` });
     return;
   }
-
-  // adapt the console messages to add a correlation key
-  const correlationKey = uuid();
-  // we use console.info because AWS logs this, however, we can suppress console.info
-  // when running the unit tests to given a cleaner output
-  const adaptee = console.info;
-  console.info = (level, message, detail) => {
-    adaptee(JSON.stringify({
-      time: new Date().toISOString(),
-      correlationKey,
-      level,
-      message,
-      detail
-    }));
-  };
 
   const context = {
     webhook: body,

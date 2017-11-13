@@ -15,6 +15,7 @@ process.env.INTEGRATION_KEY = 'spec/test-key.pem';
 process.env.INTEGRATION_ID = 2208;
 process.env.INTEGRATION_ENABLED = true;
 process.env.BOT_NAME = 'cla-bot';
+process.env.JASMINE = true;
 
 // mocks the request package to return the given response (error, response, body)
 // when invoked. A verifyRequest callback can be supplied in order to intercept / verify

@@ -4,7 +4,6 @@ const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
 const is = require('is_js');
 const uuid = require('uuid/v4');
-const gh = require('parse-github-url');
 const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
 const logger = require('./logger');
 
@@ -43,7 +42,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   const correlationKey = uuid();
   console.info = logger(console.info, correlationKey);
 
-  console.info('DEBUG', 'clabot lambda invoked by webhook', gh(body.repository.url));
+  console.info('DEBUG', 'clabot lambda invoked by webhook', body);
 
   const loggingCallback = (error, message) => {
     console.info('DEBUG', 'integration webhook callback response', { error, message });

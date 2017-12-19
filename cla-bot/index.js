@@ -42,17 +42,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   const correlationKey = uuid();
   console.info = logger(console.info, correlationKey);
 
-  console.info('DEBUG', 'clabot lambda invoked by webhook', body);
+  if (!validAction(body.action)) {
+    callback(null, { message: `ignored action of type ${body.action}` });
+    return;
+  }
 
   const loggingCallback = (error, message) => {
     console.info('DEBUG', 'integration webhook callback response', { error, message });
     callback(error, message);
   };
-
-  if (!validAction(body.action)) {
-    loggingCallback(null, { message: `ignored action of type ${body.action}` });
-    return;
-  }
 
   const context = {
     webhook: body,

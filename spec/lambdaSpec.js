@@ -134,6 +134,21 @@ describe('lambda function', () => {
     });
   });
 
+  it('should ignore actions that are issue creation', (done) => {
+    event.body = {
+      action: 'created',
+      issue: {
+        url: 'https://api.github.com/repos/getgauge/gauge/issues/823'
+      }
+    };
+    const lambda = require('../cla-bot/index');
+    lambda.handler(event, {}, (err, result) => {
+      expect(err).toBeNull();
+      expect(result.message).toEqual('ignored action of type created');
+      done();
+    });
+  });
+
   describe('HTTP issues', () => {
     xit('should propagate HTTP request errors', (done) => {
       // create a mal-formed URL

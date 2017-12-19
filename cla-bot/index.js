@@ -19,8 +19,11 @@ const noOrgConfig = false;
 const sideEffect = fn => d =>
   fn(d).then(() => d);
 
-const validAction = action =>
-  ['opened', 'synchronize', 'created'].indexOf(action) !== -1;
+const validAction = body =>
+  body.action === 'opened' ||
+  body.action === 'synchronize' ||
+  // issues do not have a body.issue.pull_request property, whereas PRs do
+  (body.action === 'created' && body.issue.pull_request);
 
 // depending on the event type, the way the location of the PR and issue URLs are different
 const gitHubUrls = webhook =>
@@ -42,17 +45,15 @@ exports.handler = ({ body }, lambdaContext, callback) => {
   const correlationKey = uuid();
   console.info = logger(console.info, correlationKey);
 
-  console.info('DEBUG', 'clabot lambda invoked by webhook', body);
+  if (!validAction(body)) {
+    callback(null, { message: `ignored action of type ${body.action}` });
+    return;
+  }
 
   const loggingCallback = (error, message) => {
     console.info('DEBUG', 'integration webhook callback response', { error, message });
     callback(error, message);
   };
-
-  if (!validAction(body.action)) {
-    loggingCallback(null, { message: `ignored action of type ${body.action}` });
-    return;
-  }
 
   const context = {
     webhook: body,

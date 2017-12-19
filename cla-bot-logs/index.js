@@ -17,6 +17,7 @@ exports.handler = ({ query }, lambdaContext, callback) => {
   };
 
   dynamodb.query(params, (err, data) => {
+    data.Items = data.Items.filter(d => d.level !== 'DEBUG');
     if (err) {
       console.log(err, err.stack);
     } else {

@@ -124,7 +124,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }
-      const committers = sortUnique(commits.map(c => c.author.login));
+      const committers = sortUnique(commits.map(c => c.author.login.toLowerCase()));
       const verifier = contributionVerifier(context.config);
       return verifier(committers, context.userToken);
     })

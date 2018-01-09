@@ -4,7 +4,8 @@ const { githubRequest, getFile } = require('./githubApi');
 
 const contributorArrayVerifier = contributors =>
   committers =>
-    Promise.resolve(committers.filter(c => contributors.indexOf(c.toLowerCase()) === -1));
+    Promise.resolve(committers.filter(c =>
+      contributors.map(v => v.toLowerCase()).indexOf(c) === -1));
 
 const configFileFromGithubUrlVerifier = contributorListGithubUrl =>
   (committers, clabotToken) =>

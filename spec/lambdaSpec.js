@@ -630,7 +630,7 @@ describe('contributionVerifier', () => {
           }
         },
         'http://raw.github.com/repos/foo/bar/contents/.contributors': {
-          body: ['bob', 'frank']
+          body: ['Bob', 'frank']
         }
       });
 

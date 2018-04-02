@@ -103,7 +103,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         console.info('INFO', 'Organisation configuration not found, resolving .clabot URL at project level');
         return githubRequest(getReadmeUrl(context), context.userToken);
       } else {
-        console.info('INFO', 'Organisation configuration not found');
+        console.info('INFO', 'Organisation configuration found!');
         return orgConfig;
       }
     })

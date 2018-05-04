@@ -483,6 +483,42 @@ describe('lambda function', () => {
   });
 
   describe('bot summoned to re-check', () => {
+    it('should ignore comments from the bot', (done) => {
+      // comments have a slightly different payload.
+      event = {
+        body: {
+          action: 'created',
+          issue: {
+            url: 'http://foo.com/user/repo/issues/2',
+            pull_request: {
+              url: 'http://foo.com/user/repo/pulls/2'
+            }
+          },
+          comment: {
+            user: {
+              login: 'cla-bot[bot]'
+            },
+            body: '@cla-bot check'
+          },
+          repository: {
+            url: 'http://foo.com/user/repo'
+          },
+          installation: {
+            id: 1000
+          }
+        }
+      };
+
+      const lambda = require('../cla-bot/index');
+
+      lambda.handler(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result.message).toEqual('the cla-bot summoned itself. Ignored!');
+          done();
+        });
+    });
+
     it('should add a comment to indicate it was successfully summoned', (done) => {
       // comments have a slightly different payload.
       event = {
@@ -495,6 +531,9 @@ describe('lambda function', () => {
             }
           },
           comment: {
+            user: {
+              login: 'fish'
+            },
             body: '@cla-bot check'
           },
           repository: {
@@ -630,7 +669,7 @@ describe('contributionVerifier', () => {
           }
         },
         'http://raw.github.com/repos/foo/bar/contents/.contributors': {
-          body: ['bob', 'frank']
+          body: ['Bob', 'frank']
         }
       });
 

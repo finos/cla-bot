@@ -669,7 +669,7 @@ describe('contributionVerifier', () => {
           }
         },
         'http://raw.github.com/repos/foo/bar/contents/.contributors': {
-          body: ['Bob', 'frank']
+          body: JSON.stringify(['Bob', 'frank'])
         }
       });
 
@@ -781,7 +781,7 @@ describe('contributionVerifier', () => {
           }
         },
         'http://raw.github.com/repos/foo/bar/contents/.contributors': {
-          body: ['bob', 'frank']
+          body: JSON.stringify(['bob', 'frank'])
         }
       });
 

@@ -72,6 +72,10 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
       return;
     } else {
+      if (body.comment.user.login === `${process.env.BOT_NAME}[bot]`) {
+        loggingCallback(null, { message: 'the cla-bot summoned itself. Ignored!' });
+        return;
+      }
       console.info('INFO', 'The cla-bot has been summoned by a comment');
     }
   }

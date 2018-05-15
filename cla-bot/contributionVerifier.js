@@ -14,7 +14,7 @@ const configFileFromGithubUrlVerifier = contributorListGithubUrl =>
       method: 'GET'
     }, clabotToken)
     .then(body => githubRequest(getFile(body), clabotToken))
-    .then(contributors => contributorArrayVerifier(JSON.parse(contributors))(committers));
+    .then(contributors => contributorArrayVerifier(contributors)(committers));
 
 const configFileFromUrlVerifier = contributorListUrl =>
   committers =>

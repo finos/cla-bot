@@ -17,11 +17,10 @@ exports.handler = ({ query }, lambdaContext, callback) => {
   };
 
   dynamodb.query(params, (err, data) => {
-    data.Items = data.Items.filter(d => d.level !== 'DEBUG');
     if (err) {
       console.log(err, err.stack);
-    } else {
-      loggingCallback(null, data.Items);
     }
+    data.Items = data.Items.filter(d => d.level !== 'DEBUG');
+    loggingCallback(null, data.Items);
   });
 };

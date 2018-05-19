@@ -27,7 +27,7 @@ In order to deploy cla-bot on AWS, please follow the steps below.
 ### Setup a Github App
 - Log into Github.com
 - Access https://github.com/settings/apps/new
-- Set homepage URL to https://finos.github.io/cla-bot
+- Set homepage URL to https://colineberhardt.github.io/cla-bot
 - Set `User authorization callback URL` and `Webhook URL` to `http://google.com`; you'll change it later on, as soon as the APIs are properly configured
 - Set `Homepage URL` to `https://colineberhardt.github.io/cla-bot`
 - On Permissions:
@@ -134,13 +134,13 @@ In order to show a nice HTML output on the logs pages, it is necessary to config
 #set($allParams = $input.params())
 <html>
 <head>
-    <title>FINOS cla-bot logs</title>
+    <title>cla-bot logs</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <body>
-    <h1>FINOS cla-bot logs</h1>
+    <h1>cla-bot logs</h1>
     <table class="table">
         <thead>
             <tr>

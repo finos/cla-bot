@@ -162,6 +162,7 @@ In order to show a nice HTML output on the logs pages, it is necessary to config
 </body>
 </html>
 ```
+You can read more about this approach on https://kennbrodhagen.net/2016/01/31/how-to-return-html-from-aws-api-gateway-lambda/ and https://docs.aws.amazon.com/apigateway/latest/developerguide/models-mappings.html
 
 If you have problems invoking the Lambda function, check the [Lambda role configurations](https://github.com/awslabs/serverless-application-model/issues/59#issuecomment-296681182) and enable API Logging (via the API Stage Editor)
 

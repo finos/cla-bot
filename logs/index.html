@@ -77,7 +77,7 @@ Handlebars.registerHelper('trim', function(context) {
 var query = location.search.slice(1).split('=');
 var correlationKey = query[1];
 
-$.get('https://9aq9pcew45.execute-api.us-east-2.amazonaws.com/prod',
+$.get('https://upb9jsyzid.execute-api.us-east-1.amazonaws.com/prod/get-logs',
   { correlationKey: correlationKey })
   .done(function(res) {
     console.log(res);

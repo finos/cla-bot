@@ -46,7 +46,6 @@ const response = body => ({
   body: JSON.stringify(body)
 });
 
-
 exports.handler = ({ body }, lambdaContext, callback) => {
   body = JSON.parse(body);
 

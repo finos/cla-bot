@@ -2,10 +2,20 @@ const AWS = require('aws-sdk');
 
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-exports.handler = ({ query }, lambdaContext, callback) => {
+const response = body => ({
+  statusCode: 200,
+  headers: {
+    'Access-Control-Allow-Origin': '*'
+  },
+  body: JSON.stringify(body)
+});
+
+exports.handler = (event, lambdaContext, callback) => {
+  const query = event.queryStringParameters;
+
   const loggingCallback = (error, message) => {
     console.info('callback', error, message);
-    callback(error, message);
+    callback(error, response(message));
   };
 
   const params = {

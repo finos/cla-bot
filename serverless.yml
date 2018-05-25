@@ -14,15 +14,20 @@ provider:
 functions:
   cla-bot:
     handler: cla-bot/index.handler
-    environment: ${file(./cla-bot/serverless.env.yml)}
+    environment: ${file(./cla-bot/serverless.env.yml):${opt:stage}}
     events:
       - http:
           path: cla-check
           method: post
   cla-bot-logs:
     handler: cla-bot-logs/index.handler
+    environment: ${file(./cla-bot-logs/serverless.env.yml):${opt:stage}}
     events:
       - http:
           path: get-logs
           method: get
           cors: true
+          request:
+            parameters:
+              querystrings:
+                url: true

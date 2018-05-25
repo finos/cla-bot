@@ -1,0 +1,28 @@
+service: cla-bot
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:Query
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/clabot-log"
+      
+functions:
+  cla-bot:
+    handler: cla-bot/index.handler
+    environment: ${file(./cla-bot/serverless.env.yml)}
+    events:
+      - http:
+          path: cla-check
+          method: post
+  cla-bot-logs:
+    handler: cla-bot-logs/index.handler
+    events:
+      - http:
+          path: get-logs
+          method: get
+          cors: true

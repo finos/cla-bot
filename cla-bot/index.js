@@ -40,19 +40,28 @@ const gitHubUrls = webhook =>
 const commentSummonsBot = comment =>
   comment.match(new RegExp(`@${process.env.BOT_NAME}(\\[bot\\])?\\s*check`)) !== null;
 
+
+const response = body => ({
+  statusCode: 200,
+  body: JSON.stringify(body)
+});
+
+
 exports.handler = ({ body }, lambdaContext, callback) => {
+  body = JSON.parse(body);
+
   // adapt the console messages to add a correlation key
   const correlationKey = uuid();
   console.info = logger(console.info, correlationKey);
 
   if (!validAction(body)) {
-    callback(null, { message: `ignored action of type ${body.action}` });
+    callback(null, response({ message: `ignored action of type ${body.action}` }));
     return;
   }
 
   const loggingCallback = (error, message) => {
     console.info('DEBUG', 'integration webhook callback response', { error, message });
-    callback(error, message);
+    callback(error, response(message));
   };
 
   const context = {

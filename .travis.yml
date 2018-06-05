@@ -2,7 +2,7 @@ language: node_js
 node_js:
 - '6'
 
-before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv -in secrets.tar.enc -out secrets.tar -d ; tar xvf secrets.tar -C cla-bot; fi"
+before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv -in secrets.tar.enc -out secrets.tar -d ; tar xvf secrets.tar; fi"
 
 after_success:
- - serverless deploy --stage dev
+ - test $TRAVIS_BRANCH = "develop" && serverless deploy --stage dev

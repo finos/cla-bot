@@ -133,7 +133,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       return githubRequest(getCommits(context), context.userToken);
     })
     .then((commits) => {
-      console.info('INFO', `A total of ${commits.length} were found, checking CLA status for committers`);
+      console.info('INFO', `Total Commits: ${commits.length}, checking CLA status for committers`);
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }

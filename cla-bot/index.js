@@ -112,7 +112,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
     })
     .then((orgConfig) => {
-      console.info('INFO', `Obtaining .clabot configuration file from ${orgConfig.download_url}`);
+      console.info('INFO', `Obtaining .clabot configuration file from ${orgConfig.download_url.split('?')[0]}`);
       return githubRequest(getFile(orgConfig), context.userToken);
     })
     .then((config) => {

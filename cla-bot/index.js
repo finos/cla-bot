@@ -47,26 +47,27 @@ const response = body => ({
 });
 
 exports.handler = ({ body }, lambdaContext, callback) => {
-  body = JSON.parse(body);
-
-  // adapt the console messages to add a correlation key
   const correlationKey = uuid();
-  console.info = logger(console.info, correlationKey);
+
+  body = JSON.parse(body);
 
   if (!validAction(body)) {
     callback(null, response({ message: `ignored action of type ${body.action}` }));
     return;
   }
 
-  const loggingCallback = (error, message) => {
-    console.info('DEBUG', 'integration webhook callback response', { error, message });
-    callback(error, response(message));
-  };
-
   const context = {
     webhook: body,
-    correlationKey,
     gitHubUrls: gitHubUrls(body),
+    correlationKey
+  };
+  const org = context.gitHubUrls.pullRequest.split('/')[4];
+  context.logUrl = `${org}-${correlationKey}`;
+
+  const loggingCallback = (error, message) => {
+    logger.debug('integration webhook callback response', { error, message });
+    logger.flush(context.logUrl).then(() =>
+      callback(error, response(message)));
   };
 
   // PRs include the head sha, for comments we have to determine this from the commit history
@@ -76,7 +77,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
 
   if (body.action === 'created') {
     if (!commentSummonsBot(body.comment.body)) {
-      console.info('DEBUG', 'context', { context });
+      logger.debug('context', { context });
       loggingCallback(null, { message: 'the comment didnt summon the cla-bot' });
       return;
     } else {
@@ -84,26 +85,26 @@ exports.handler = ({ body }, lambdaContext, callback) => {
         loggingCallback(null, { message: 'the cla-bot summoned itself. Ignored!' });
         return;
       }
-      console.info('INFO', 'The cla-bot has been summoned by a comment');
+      logger.info('The cla-bot has been summoned by a comment');
     }
   }
 
-  console.info('INFO', `Checking CLAs for pull request ${context.gitHubUrls.pullRequest}`);
+  logger.info(`Checking CLAs for pull request ${context.gitHubUrls.pullRequest}`);
 
   Promise.resolve()
     .then(() => {
       // if we are running as an integration, obtain the required integration token
       if (process.env.INTEGRATION_ENABLED && process.env.INTEGRATION_ENABLED === 'true') {
-        console.info('INFO', 'Bot installed as an integration, obtaining installation token');
+        logger.info('Bot installed as an integration, obtaining installation token');
         return installationToken(context.webhook.installation.id);
       } else {
-        console.info('INFO', 'Bot installed as a webhook, using access token');
+        logger.info('Bot installed as a webhook, using access token');
         return process.env.GITHUB_ACCESS_TOKEN;
       }
     })
     .then((token) => {
       context.userToken = token;
-      console.info('INFO', 'Attempting to obtain organisation level .clabot file URL');
+      logger.info('Attempting to obtain organisation level .clabot file URL');
       return githubRequest(getOrgConfig(context), context.userToken);
     })
     // if the request to obtain the org-level .clabot file returns a non 2xx response
@@ -112,27 +113,27 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     .catch(() => ({ noOrgConfig }))
     .then((orgConfig) => {
       if ('noOrgConfig' in orgConfig) {
-        console.info('INFO', 'Organisation configuration not found, resolving .clabot URL at project level');
+        logger.info('Organisation configuration not found, resolving .clabot URL at project level');
         return githubRequest(getReadmeUrl(context), context.userToken);
       } else {
-        console.info('INFO', 'Organisation configuration found!');
+        logger.info('Organisation configuration found!');
         return orgConfig;
       }
     })
     .then((orgConfig) => {
-      console.info('INFO', `Obtaining .clabot configuration file from ${orgConfig.download_url}`);
+      logger.info(`Obtaining .clabot configuration file from ${orgConfig.download_url}`);
       return githubRequest(getFile(orgConfig), context.userToken);
     })
     .then((config) => {
       if (!is.json(config)) {
         throw new Error('The .clabot file is not valid JSON');
       }
-      console.info('INFO', 'Obtaining the list of commits for the pull request');
+      logger.info('Obtaining the list of commits for the pull request');
       context.config = Object.assign({}, defaultConfig, config);
       return githubRequest(getCommits(context), context.userToken);
     })
     .then((commits) => {
-      console.info('INFO', `Total Commits: ${commits.length}, checking CLA status for committers`);
+      logger.info(`Total Commits: ${commits.length}, checking CLA status for committers`);
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }
@@ -142,14 +143,14 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     })
     .then((nonContributors) => {
       if (nonContributors.length === 0) {
-        console.info('INFO', 'All contributors have a signed CLA, adding success status to the pull request and a label');
+        logger.info('All contributors have a signed CLA, adding success status to the pull request and a label');
         return githubRequest(getLabels(context), context.userToken, 'GET')
           .then((labels) => {
             // check whether this label already exists
             if (!labels.some(l => l.name === context.config.label)) {
               githubRequest(addLabel(context), context.userToken);
             } else {
-              console.info('INFO', `The pull request already has the label ${context.config.label}`);
+              logger.info(`The pull request already has the label ${context.config.label}`);
             }
           })
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
@@ -157,7 +158,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       } else {
         const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
           .join(', ');
-        console.info('INFO', `The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`);
+        logger.info(`The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`);
         return githubRequest(addComment(context, usersWithoutCLA), context.userToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'error'), context.userToken))
@@ -172,7 +173,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
     }))
     .then(message => loggingCallback(null, { message }))
     .catch((err) => {
-      console.info('ERROR', err.toString());
+      logger.error(err.toString());
       githubRequest(setStatus(context, 'failure'), context.userToken)
         .then(() => loggingCallback(err.toString()));
     });

@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "execute:bot": "serverless invoke local --function cla-bot --path cla-bot/dev/event.json",
-    "execute:logs": "node cla-bot-logs/dev/index.js",
+    "execute:bot": "serverless invoke local --function cla-bot --path cla-bot/dev/event.json --stage dev",
     "test": "npm run lint && jasmine",
-    "lint": "eslint --ignore-path .gitignore \"cla-bot/*.js\" \"cla-bot-logs/*.js\" \"spec/*.js\"",
-    "postinstall": "cd cla-bot && npm i && cd ../cla-bot-logs && npm i"
+    "lint": "eslint --ignore-path .gitignore \"cla-bot/*.js\" \"spec/*.js\"",
+    "postinstall": "cd cla-bot && npm i"
   },
   "author": "",
   "license": "ISC",

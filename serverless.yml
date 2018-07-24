@@ -3,13 +3,13 @@ service: cla-bot
 provider:
   name: aws
   runtime: nodejs8.10
+  region: us-east-1
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:Query
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/clabot-log"
+        - s3:PutObject
+        - s3:PutObjectAcl
+      Resource: "arn:aws:s3:::${file(./cla-bot/serverless.env.yml):${opt:stage}.LOGGING_BUCKET}/*"
       
 functions:
   cla-bot:
@@ -19,15 +19,3 @@ functions:
       - http:
           path: cla-check
           method: post
-  cla-bot-logs:
-    handler: cla-bot-logs/index.handler
-    environment: ${file(./cla-bot-logs/serverless.env.yml):${opt:stage}}
-    events:
-      - http:
-          path: get-logs
-          method: get
-          cors: true
-          request:
-            parameters:
-              querystrings:
-                url: true

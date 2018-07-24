@@ -6,3 +6,4 @@ before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes
 
 after_success:
  - test $TRAVIS_BRANCH = "develop" && serverless deploy --stage dev
+ - test $TRAVIS_BRANCH = "master" && serverless deploy --stage prod

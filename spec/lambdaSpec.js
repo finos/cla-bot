@@ -12,8 +12,8 @@ const merge = (a, b) => Object.assign({}, a, b);
 const installationToken = 'this-is-a-test';
 
 process.env.INTEGRATION_KEY = 'spec/test-key.pem';
-process.env.INTEGRATION_ID = 2208;
-process.env.INTEGRATION_ENABLED = true;
+process.env.INTEGRATION_ID = '2208';
+process.env.INTEGRATION_ENABLED = 'true';
 process.env.BOT_NAME = 'cla-bot';
 process.env.JASMINE = true;
 

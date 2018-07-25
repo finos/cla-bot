@@ -6,6 +6,7 @@ const s3 = new AWS.S3({ apiVersion: "2006-03-01" });
 
 const loggedMessages = [];
 const detailedLoggedMessages = [];
+let logFile = "";
 
 const logMessage = (level, message, detail) => {
   const logData = [new Date().toISOString(), level, message];
@@ -29,7 +30,10 @@ const logger = {
   error(message, detail) {
     logMessage("ERROR", message, detail);
   },
-  flush(id) {
+  logFile(filename) {
+    logFile = filename;
+  },
+  flush() {
     if (process.env.JASMINE) {
       return Promise.resolve({});
     }
@@ -39,7 +43,7 @@ const logger = {
         .putObject({
           Body: loggedMessages.join("\r\n"),
           Bucket: "cla-bot",
-          Key: id,
+          Key: logFile,
           ACL: "public-read",
           ContentType: "text/plain"
         })

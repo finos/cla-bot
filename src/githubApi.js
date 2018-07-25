@@ -26,12 +26,12 @@ exports.githubRequest = (opts, token, method = "POST") =>
     )
   );
 
-exports.getOrgConfig = ({ webhook }) => ({
+exports.getOrgConfig = webhook => ({
   url: getOrgConfigUrl(webhook.repository.url),
   method: "GET"
 });
 
-exports.getReadmeUrl = ({ webhook }) => ({
+exports.getReadmeUrl = webhook => ({
   url: `${webhook.repository.url}/contents/.clabot`,
   method: "GET"
 });
@@ -41,51 +41,50 @@ exports.getFile = body => ({
   method: "GET"
 });
 
-exports.addLabel = ({ gitHubUrls, config }) => ({
-  url: `${gitHubUrls.issue}/labels`,
-  body: [config.label]
+exports.addLabel = (issueUrl, label) => ({
+  url: `${issueUrl}/labels`,
+  body: [label]
 });
 
-exports.getLabels = ({ gitHubUrls }) => ({
-  url: `${gitHubUrls.issue}/labels`
-});
-
-exports.deleteLabel = ({ gitHubUrls, config }) => ({
-  url: `${gitHubUrls.issue}/labels`,
-  body: [config.label],
-  method: "DELETE"
-});
-
-exports.getCommits = ({ gitHubUrls }) => ({
-  url: `${gitHubUrls.pullRequest}/commits`,
+exports.getLabels = issueUrl => ({
+  url: `${issueUrl}/labels`,
   method: "GET"
 });
 
-exports.setStatus = ({ webhook, gitHubUrls, logUrl, headSha }, state) => ({
+exports.deleteLabel = (issueUrl, label) => ({
+  url: `${issueUrl}/labels`,
+  body: [label],
+  method: "DELETE"
+});
+
+exports.getCommits = pullRequestUrl => ({
+  url: `${pullRequestUrl}/commits`,
+  method: "GET"
+});
+
+exports.setStatus = (webhook, headSha, state, target_url) => ({
   url: `${webhook.repository.url}/statuses/${headSha}`,
   body: {
     state,
     context: "verification/cla-signed",
-    target_url: `https://s3.amazonaws.com/${
-      process.env.LOGGING_BUCKET
-    }/${logUrl}`
+    target_url
   }
 });
 
-exports.addRecheckComment = ({ gitHubUrls, config }) => ({
-  url: `${gitHubUrls.issue}/comments`,
+exports.addRecheckComment = (issueUrl, recheckComment) => ({
+  url: `${issueUrl}/comments`,
   body: {
-    body: config.recheckComment
+    body: recheckComment
   }
 });
 
-exports.addComment = ({ gitHubUrls, config }, usersWithoutCLA) => {
-  const template = handlebars.compile(config.message);
-  const message = template({ usersWithoutCLA });
+exports.addComment = (issueUrl, message, usersWithoutCLA) => {
+  // TODO: move this logic out of this file
+  const template = handlebars.compile(message);
   return {
-    url: `${gitHubUrls.issue}/comments`,
+    url: `${issueUrl}/comments`,
     body: {
-      body: message
+      body: template({ usersWithoutCLA })
     }
   };
 };

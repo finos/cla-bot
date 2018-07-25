@@ -135,7 +135,7 @@ describe('lambda function', () => {
 
   it('should ignore actions that are not pull requests being opened', (done) => {
     event.body.action = 'label';
-    const lambda = require('../cla-bot/index');
+    const lambda = require('../src/index');
 
     adaptedLambda(lambda.handler)(event, {}, (err, result) => {
       expect(err).toBeNull();
@@ -151,7 +151,7 @@ describe('lambda function', () => {
         url: 'https://api.github.com/repos/getgauge/gauge/issues/823'
       }
     };
-    const lambda = require('../cla-bot/index');
+    const lambda = require('../src/index');
     adaptedLambda(lambda.handler)(event, {}, (err, result) => {
       expect(err).toBeNull();
       expect(result.message).toEqual('ignored action of type created');
@@ -163,7 +163,7 @@ describe('lambda function', () => {
     xit('should propagate HTTP request errors', (done) => {
       // create a mal-formed URL
       event.body.repository.url = 'http:://foo.com/user/repo';
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
       adaptedLambda(lambda.handler)(event, {}, (err) => {
         expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
         done();
@@ -187,7 +187,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err) => {
@@ -211,7 +211,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err) => {
@@ -235,7 +235,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err) => {
@@ -259,7 +259,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err) => {
@@ -288,7 +288,7 @@ describe('lambda function', () => {
       ], installationToken));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {}, done);
     });
@@ -302,7 +302,7 @@ describe('lambda function', () => {
       ], installationToken));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {}, done);
     });
@@ -335,7 +335,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -369,7 +369,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -402,7 +402,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -425,7 +425,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -448,7 +448,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -482,7 +482,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err) => {
@@ -519,7 +519,7 @@ describe('lambda function', () => {
         }
       };
 
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -564,7 +564,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -603,7 +603,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -646,7 +646,7 @@ describe('lambda function', () => {
       }));
 
       mock('request', request);
-      const lambda = require('../cla-bot/index');
+      const lambda = require('../src/index');
 
       adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
@@ -684,7 +684,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob'])
         .then((nonContributors) => {
@@ -705,7 +705,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob', 'billy'])
         .then((nonContributors) => {
@@ -733,7 +733,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob', 'foo'])
         .then((nonContributors) => {
@@ -749,7 +749,7 @@ describe('contributionVerifier', () => {
         contributors: ['billy']
       };
 
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob', 'billy'])
         .then((nonContributors) => {
@@ -770,7 +770,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob', 'billy'])
         .then((nonContributors) => {
@@ -796,7 +796,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob'])
         .then((nonContributors) => {
@@ -824,7 +824,7 @@ describe('contributionVerifier', () => {
       });
 
       mock('request', request);
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
 
       verifier(config)(['bob', 'foo'])
         .then((nonContributors) => {
@@ -835,7 +835,7 @@ describe('contributionVerifier', () => {
 
     it('should throw an error if no configuration is supplied', () => {
       const config = {};
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
       expect(() => verifier(config))
         .toThrow(new Error('A mechanism for verifying contributors has not been specified'));
     });
@@ -844,7 +844,7 @@ describe('contributionVerifier', () => {
       const config = {
         contributors: 'sausage'
       };
-      const verifier = require('../cla-bot/contributionVerifier');
+      const verifier = require('../src/contributionVerifier');
       expect(() => verifier(config))
         .toThrow(new Error('A mechanism for verifying contributors has not been specified'));
     });
@@ -852,7 +852,7 @@ describe('contributionVerifier', () => {
 });
 
 describe('lambda internals', () => {
-  const internals = require('../cla-bot/index').test;
+  const internals = require('../src/index').test;
 
   describe('commentSummonsBot', () => {
     it('should match comments with one space', () => {

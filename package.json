@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "execute:bot": "node cla-bot/dev/index.js",
-    "execute:logs": "node cla-bot-logs/dev/index.js",
+    "execute:bot": "serverless invoke local --function cla-bot --path cla-bot/dev/event.json --stage dev",
     "test": "npm run lint && jasmine",
-    "lint": "eslint --ignore-path .gitignore \"cla-bot/*.js\" \"cla-bot-logs/*.js\" \"spec/*.js\"",
-    "postinstall": "cd cla-bot && npm i && cd ../cla-bot-logs && npm i"
+    "lint": "eslint --ignore-path .gitignore \"cla-bot/*.js\" \"spec/*.js\"",
+    "postinstall": "cd cla-bot && npm i"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +24,7 @@
     "eslint-plugin-standard": "^3.0.1",
     "jasmine": "^2.6.0",
     "jasmine-spec-reporter": "^4.1.0",
-    "mock-require": "^2.0.2"
+    "mock-require": "^2.0.2",
+    "serverless": "^1.27.3"
   }
 }

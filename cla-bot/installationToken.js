@@ -2,7 +2,7 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const requestp = require('./requestAsPromise');
 
-const integrationId = process.env.INTEGRATION_ID;
+const integrationId = Number(process.env.INTEGRATION_ID);
 
 module.exports = (installationId) => {
   const cert = fs.readFileSync(process.env.INTEGRATION_KEY);

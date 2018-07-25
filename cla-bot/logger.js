@@ -1,45 +1,59 @@
 const AWS = require('aws-sdk');
-const uuid = require('uuid/v4');
 
-const dynamoClient = new AWS.DynamoDB.DocumentClient();
+AWS.config.setPromisesDependency(Promise);
 
-const removeEmptyStringElements = (obj) => {
-  for (const prop in obj) {
-    if (typeof obj[prop] === 'object') {
-      removeEmptyStringElements(obj[prop]);
-    } else if (obj[prop] === '') {
-      delete obj[prop];
-    }
+const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+
+const loggedMessages = [];
+const detailedLoggedMessages = [];
+
+const logMessage = (level, message, detail) => {
+  const logData = [new Date().toISOString(), level, message];
+  // super crude filtering! these logs are displayed externally to end users
+  // so we need to be v. careful about what is included.
+  if (level !== 'DEBUG') {
+    loggedMessages.push(logData.join(' '));
   }
-  return obj;
+  logData.push(JSON.stringify(detail));
+  detailedLoggedMessages.push(logData.join(' '));
+  console.info(logData.join(' '));
 };
 
-module.exports = (adaptee, correlationKey) => {
-  // we use console.info because AWS logs this, however, we can suppress console.info
-  // when running the unit tests to given a cleaner output
-  const adapted = (level, message, detail) => {
-    const logData = {
-      time: new Date().toISOString(),
-      uuid: uuid(),
-      correlationKey,
-      level,
-      message,
-      detail
-    };
-
-    adaptee(JSON.stringify(logData));
-
-    if (!process.env.JASMINE) {
-      dynamoClient.put({
-        TableName: process.env.LOGGING_TABLE,
-        Item: removeEmptyStringElements(logData)
-      }, (err) => {
-        if (err) {
-          console.error('Unable to write to DynamoDb', err, logData);
-        }
-      });
+const logger = {
+  debug(message, detail) {
+    logMessage('DEBUG', message, detail);
+  },
+  info(message, detail) {
+    logMessage('INFO', message, detail);
+  },
+  error(message, detail) {
+    logMessage('ERROR', message, detail);
+  },
+  flush(id) {
+    if (process.env.JASMINE) {
+      return Promise.resolve({});
     }
-  };
 
-  return adapted;
+    return Promise.all(
+      [
+        s3.putObject({
+          Body: loggedMessages.join('\r\n'),
+          Bucket: 'cla-bot',
+          Key: id,
+          ACL: 'public-read',
+          ContentType: 'text/plain'
+        })
+        .promise(),
+        s3.putObject({
+          Body: detailedLoggedMessages.join('\r\n'),
+          Bucket: 'cla-bot',
+          Key: `${id}-DEBUG`,
+          ACL: 'public-read',
+          ContentType: 'text/plain'
+        })
+        .promise()
+      ]);
+  }
 };
+
+module.exports = logger;

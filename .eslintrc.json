@@ -1,11 +1,9 @@
 {
-  "root": true,
-  "extends": "eslint-config-airbnb",
+  "plugins": ["prettier"],
   "rules": {
-    "comma-dangle": 0,
-    "no-console": 0,
-    "no-else-return": 0,
-    "no-param-reassign": 0,
-    "no-restricted-syntax": 0
+    "prettier/prettier": "error"
+  },
+  "parserOptions": {
+    "ecmaVersion": 6
   }
 }

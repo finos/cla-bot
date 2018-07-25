@@ -1,36 +1,44 @@
-const handlebars = require('handlebars');
-const requestp = require('./requestAsPromise');
-const gh = require('parse-github-url');
+const handlebars = require("handlebars");
+const requestp = require("./requestAsPromise");
+const gh = require("parse-github-url");
 
-const getOrgConfigUrl = (repositoryUrl) => {
+const getOrgConfigUrl = repositoryUrl => {
   const ghData = gh(repositoryUrl);
-  const ghUrl = `https://${ghData.host}/repos/${ghData.owner}/clabot-config/contents/.clabot`;
+  const ghUrl = `https://${ghData.host}/repos/${
+    ghData.owner
+  }/clabot-config/contents/.clabot`;
   return ghUrl;
 };
 
-exports.githubRequest = (opts, token, method = 'POST') =>
-    requestp(Object.assign({}, {
-      json: true,
-      headers: {
-        Authorization: `token ${token}`,
-        'User-Agent': 'github-cla-bot'
+exports.githubRequest = (opts, token, method = "POST") =>
+  requestp(
+    Object.assign(
+      {},
+      {
+        json: true,
+        headers: {
+          Authorization: `token ${token}`,
+          "User-Agent": "github-cla-bot"
+        },
+        method
       },
-      method
-    }, opts));
+      opts
+    )
+  );
 
 exports.getOrgConfig = ({ webhook }) => ({
   url: getOrgConfigUrl(webhook.repository.url),
-  method: 'GET'
+  method: "GET"
 });
 
 exports.getReadmeUrl = ({ webhook }) => ({
   url: `${webhook.repository.url}/contents/.clabot`,
-  method: 'GET'
+  method: "GET"
 });
 
 exports.getFile = body => ({
   url: body.download_url,
-  method: 'GET'
+  method: "GET"
 });
 
 exports.addLabel = ({ gitHubUrls, config }) => ({
@@ -45,20 +53,22 @@ exports.getLabels = ({ gitHubUrls }) => ({
 exports.deleteLabel = ({ gitHubUrls, config }) => ({
   url: `${gitHubUrls.issue}/labels`,
   body: [config.label],
-  method: 'DELETE'
+  method: "DELETE"
 });
 
 exports.getCommits = ({ gitHubUrls }) => ({
   url: `${gitHubUrls.pullRequest}/commits`,
-  method: 'GET'
+  method: "GET"
 });
 
 exports.setStatus = ({ webhook, gitHubUrls, logUrl, headSha }, state) => ({
   url: `${webhook.repository.url}/statuses/${headSha}`,
   body: {
     state,
-    context: 'verification/cla-signed',
-    target_url: `https://s3.amazonaws.com/${process.env.LOGGING_BUCKET}/${logUrl}`
+    context: "verification/cla-signed",
+    target_url: `https://s3.amazonaws.com/${
+      process.env.LOGGING_BUCKET
+    }/${logUrl}`
   }
 });
 
@@ -72,10 +82,10 @@ exports.addRecheckComment = ({ gitHubUrls, config }) => ({
 exports.addComment = ({ gitHubUrls, config }, usersWithoutCLA) => {
   const template = handlebars.compile(config.message);
   const message = template({ usersWithoutCLA });
-  return ({
+  return {
     url: `${gitHubUrls.issue}/comments`,
     body: {
       body: message
     }
-  });
+  };
 };

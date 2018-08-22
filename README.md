@@ -12,6 +12,43 @@ This bot has the following features:
  - Provides a fully-hosted solution, you don't have to maintain your own bit installation
  - You can provide templates for the various messages this bot posts
 
+## Used by ...
+
+This bot is used by a number of prominent open source projects including:
+
+<table>
+<tr>
+  <td>
+    <a href="https://gauge.org/"><img src="https://avatars0.githubusercontent.com/u/7044589?s=50"/>
+    <br/>Gauge</a>
+  </td>
+  <td>
+    <a href="https://finos.org/"><img src="https://avatars0.githubusercontent.com/u/35377814?s=50"/>
+    <br/>FINOS</a>
+  </td>
+  <td>
+    <a href="https://www.predix-ui.com/#/home"><img src="https://avatars0.githubusercontent.com/u/32078779?s=50"/>
+    <br/>Predix</a>
+  </td>
+  <td>
+    <a href="https://www.devcolor.org/"><img src="https://avatars0.githubusercontent.com/u/17156358?s=50"/>
+    <br/>dev/color</a>
+  </td>
+  <td>
+    <a href="http://gladius.io/"><img src="https://avatars0.githubusercontent.com/u/32402535?s=50"/>
+    <br/>Gladius</a>
+  </td>
+  <td>
+    <a href="https://storj.io/"><img src="https://avatars0.githubusercontent.com/u/6308081?s=50"/>
+    <br/>Storj</a>
+  </td>
+  <td>
+    <a href="https://www.skylight.io/"><img src="https://avatars0.githubusercontent.com/u/4999088?s=50"/>
+    <br/>Skylight</a>
+  </td>
+</tr>
+</table>
+
 ## What is a CLA?
 
 If you maintain an open source project you'll likely have selected an open source licence that governs your project. This provides an implicit agreement for contributors to your project, whereas a Contributor Licence Agreement (CLA) makes these terms explicit and provides a record of these agreements.

@@ -6,3 +6,12 @@
 pre.highlight {
   white-space: pre-wrap;
 }
+
+td a:hover {
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+td {
+  border: none;
+}

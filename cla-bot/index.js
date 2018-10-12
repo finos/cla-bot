@@ -4,7 +4,7 @@ const contributionVerifier = require('./contributionVerifier');
 const installationToken = require('./installationToken');
 const is = require('is_js');
 const uuid = require('uuid/v4');
-const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addComment, deleteLabel, addRecheckComment } = require('./githubApi');
+const { githubRequest, getLabels, getOrgConfig, getReadmeUrl, getFile, addLabel, getCommits, setStatus, addCommentNoCLA, addCommentNoEmail, deleteLabel, addRecheckComment } = require('./githubApi');
 const logger = require('./logger');
 
 const defaultConfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'default.json')));
@@ -121,7 +121,7 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       }
     })
     .then((orgConfig) => {
-      logger.info(`Obtaining .clabot configuration file from ${orgConfig.download_url}`);
+      logger.info(`Obtaining .clabot configuration file from ${orgConfig.download_url.split('?')[0]}`);
       return githubRequest(getFile(orgConfig), context.userToken);
     })
     .then((config) => {
@@ -137,13 +137,32 @@ exports.handler = ({ body }, lambdaContext, callback) => {
       if (!context.headSha) {
         context.headSha = commits[commits.length - 1].sha;
       }
-      const committers = sortUnique(commits.map(c => c.author.login.toLowerCase()));
-      const verifier = contributionVerifier(context.config);
-      return verifier(committers, context.userToken);
+      const unresolvedLogins = commits.filter(c => c.author == null);
+      const unresolvedLoginNames = sortUnique(unresolvedLogins.map(c => c.commit.author.name));
+      return {
+        unresolved: unresolvedLoginNames,
+        commits
+      };
     })
-    .then((nonContributors) => {
-      if (nonContributors.length === 0) {
-        logger.info('All contributors have a signed CLA, adding success status to the pull request and a label');
+    .then((parsedCommits) => {
+      if (parsedCommits.unresolved.length > 0) {
+        return [null, parsedCommits.unresolved];
+      } else {
+        const committers = sortUnique(parsedCommits.commits.map(c => c.author.login.toLowerCase()));
+        const verifier = contributionVerifier(context.config);
+        return Promise.all([verifier(committers, context.userToken), null]);
+      }
+    })
+    .then(([nonContributors, unidentified]) => {
+      if (unidentified && unidentified.length > 0) {
+        const unidentifiedString = unidentified.map(u => `${u}`).join(', ');
+        console.info('INFO', `Some commits from the following contributors are not signed with a validate email address: ${unidentifiedString}. `);
+        return githubRequest(addCommentNoEmail(context, unidentifiedString), context.userToken)
+          .then(() => githubRequest(deleteLabel(context), context.userToken))
+          .then(() => githubRequest(setStatus(context, 'error'), context.userToken))
+          .then(() => `CLA has not been signed by users ${unidentifiedString}, added a comment to ${context.gitHubUrls.pullRequest}`);
+      } else if (nonContributors && nonContributors.length === 0) {
+        console.info('INFO', 'All contributors have a signed CLA, adding success status to the pull request and a label');
         return githubRequest(getLabels(context), context.userToken, 'GET')
           .then((labels) => {
             // check whether this label already exists
@@ -156,10 +175,9 @@ exports.handler = ({ body }, lambdaContext, callback) => {
           .then(() => githubRequest(setStatus(context, 'success'), context.userToken))
           .then(() => `added label ${context.config.label} to ${context.gitHubUrls.pullRequest}`);
       } else {
-        const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`)
-          .join(', ');
-        logger.info(`The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`);
-        return githubRequest(addComment(context, usersWithoutCLA), context.userToken)
+        const usersWithoutCLA = nonContributors.map(contributorId => `@${contributorId}`).join(', ');
+        console.info(`The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`);
+        return githubRequest(addCommentNoCLA(context, usersWithoutCLA), context.userToken)
           .then(() => githubRequest(deleteLabel(context), context.userToken))
           .then(() => githubRequest(setStatus(context, 'error'), context.userToken))
           .then(() => `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${context.gitHubUrls.pullRequest}`);

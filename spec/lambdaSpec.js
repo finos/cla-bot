@@ -379,6 +379,45 @@ describe('lambda function', () => {
         });
     });
 
+    it('should fail if user is not set', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('error');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('We could not parse the GitHub identity of the following contributors: Colin Eberhardt');
+          }
+        },
+        // the next is to download the commits for the PR
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            {
+              sha: '1234',
+              commit: {
+                author: {
+                  name: 'Colin Eberhardt'
+                }
+              }
+              // removed the author element, to reproduce the issue
+            }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../cla-bot/index');
+
+      adaptedLambda(lambda.handler)(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result).not.toBeNull();
+          done();
+        });
+    });
+
     it('should comment and set status on pull requests where a CLA has not been signed', (done) => {
       const request = mockMultiRequest(merge(mockConfig, {
         'http://foo.com/user/repo/statuses/1234': {

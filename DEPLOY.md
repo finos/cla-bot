@@ -10,7 +10,6 @@ Within the `cla-bot` sub-folder, rename `serverless.env.example.yml` to `serverl
 
 Please note that - if `GITHUB_ACCESS_TOKEN` is defined, `INTEGRATION_ENABLED` MUST be set to `false` (otherwise the GitHub Access Token will not be used and the cla-bot will fail accessing clabot-config, if private)
 
-
 ## Serverless
 
 The cla-bot uses the serverless framework to manage the deployment of lambda functions, AWS gateway etc ...

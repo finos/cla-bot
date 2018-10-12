@@ -69,9 +69,20 @@ exports.addRecheckComment = ({ gitHubUrls, config }) => ({
   }
 });
 
-exports.addComment = ({ gitHubUrls, config }, usersWithoutCLA) => {
+exports.addCommentNoCLA = ({ gitHubUrls, config }, usersWithoutCLA) => {
   const template = handlebars.compile(config.message);
   const message = template({ usersWithoutCLA });
+  return ({
+    url: `${gitHubUrls.issue}/comments`,
+    body: {
+      body: message
+    }
+  });
+};
+
+exports.addCommentNoEmail = ({ gitHubUrls, config }, unidentifiedUsers) => {
+  const template = handlebars.compile(config.messageMissingEmail);
+  const message = template({ unidentifiedUsers });
   return ({
     url: `${gitHubUrls.issue}/comments`,
     body: {

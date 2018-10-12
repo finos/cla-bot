@@ -53,12 +53,12 @@ exports.getCommits = ({ gitHubUrls }) => ({
   method: 'GET'
 });
 
-exports.setStatus = ({ webhook, gitHubUrls, correlationKey, headSha }, state) => ({
+exports.setStatus = ({ webhook, gitHubUrls, logUrl, headSha }, state) => ({
   url: `${webhook.repository.url}/statuses/${headSha}`,
   body: {
     state,
     context: 'verification/cla-signed',
-    target_url: `${process.env.LOG_URL}?correlationKey=${correlationKey}`
+    target_url: `https://s3.amazonaws.com/${process.env.LOGGING_BUCKET}/${logUrl}`
   }
 });
 

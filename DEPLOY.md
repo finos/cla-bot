@@ -2,18 +2,6 @@
 
 In order to deploy cla-bot on AWS, please follow the steps below.
 
-## Quick redeploy
-
-### Staging
-- node-lambda deploy --configFile staging.env -n finos-cla-bot-staging-logs
-- node-lambda deploy --configFile prod.env -n finos-cla-bot-prod-lambda
-
-### Prod
-- node-lambda deploy --configFile prod.env -n finos-cla-bot-prod-logs
-- node-lambda deploy --configFile prod.env -n finos-cla-bot-prod-lambda
-
-## AWS Resources
-=======
 ## Configure cla-bot module
 
 ### create `env` files

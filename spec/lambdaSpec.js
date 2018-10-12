@@ -410,7 +410,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result).not.toBeNull();

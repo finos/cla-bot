@@ -5,6 +5,11 @@ package-lock.json
 
 # don't commit the file that simulates the AWS environment variables
 *.env
+.serverless
+
+# don't commit the file that simulates the AWS environment variables
+.env
+serverless.env.yml
 
 # I don't want to commit the private RSA keys for my bot!
 # see: https://docs.travis-ci.com/user/encrypting-files/#Encrypting-multiple-files

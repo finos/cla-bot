@@ -12,8 +12,8 @@ const merge = (a, b) => Object.assign({}, a, b);
 const installationToken = 'this-is-a-test';
 
 process.env.INTEGRATION_KEY = 'spec/test-key.pem';
-process.env.INTEGRATION_ID = 2208;
-process.env.INTEGRATION_ENABLED = true;
+process.env.INTEGRATION_ID = '2208';
+process.env.INTEGRATION_ENABLED = 'true';
 process.env.BOT_NAME = 'cla-bot';
 process.env.JASMINE = true;
 
@@ -124,10 +124,20 @@ describe('lambda function', () => {
 
   // TODO: Test X-GitHub-Event header is a pull_request type
 
+  // the code has been migrated to the serverless framework which
+  // stringifies the event body, and expects a stringified response
+  const adaptedLambda = lambda => (ev, context, callback) => {
+    ev.body = JSON.stringify(event.body);
+    lambda(ev, context, (err, result) => {
+      callback(err, result && result.body ? JSON.parse(result.body) : undefined);
+    });
+  };
+
   it('should ignore actions that are not pull requests being opened', (done) => {
     event.body.action = 'label';
     const lambda = require('../cla-bot/index');
-    lambda.handler(event, {}, (err, result) => {
+
+    adaptedLambda(lambda.handler)(event, {}, (err, result) => {
       expect(err).toBeNull();
       expect(result.message).toEqual('ignored action of type label');
       done();
@@ -142,7 +152,7 @@ describe('lambda function', () => {
       }
     };
     const lambda = require('../cla-bot/index');
-    lambda.handler(event, {}, (err, result) => {
+    adaptedLambda(lambda.handler)(event, {}, (err, result) => {
       expect(err).toBeNull();
       expect(result.message).toEqual('ignored action of type created');
       done();
@@ -154,7 +164,7 @@ describe('lambda function', () => {
       // create a mal-formed URL
       event.body.repository.url = 'http:://foo.com/user/repo';
       const lambda = require('../cla-bot/index');
-      lambda.handler(event, {}, (err) => {
+      adaptedLambda(lambda.handler)(event, {}, (err) => {
         expect(err).toEqual('Error: Invalid URI "http:://foo.com/user/repo/contents/.clabot"');
         done();
       });
@@ -179,7 +189,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err) => {
           expect(err).toBeNull();
           done();
@@ -203,7 +213,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err) => {
           expect(err).toBeNull();
           done();
@@ -227,7 +237,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err) => {
           expect(err).toEqual('Error: API request http://foo.com/user/repo/contents/.clabot failed with status 404');
           done();
@@ -251,7 +261,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err) => {
           expect(err).toEqual('Error: The .clabot file is not valid JSON');
           done();
@@ -280,7 +290,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {}, done);
+      adaptedLambda(lambda.handler)(event, {}, done);
     });
 
     it('should use the clients auth token for labelling and status', (done) => {
@@ -294,7 +304,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {}, done);
+      adaptedLambda(lambda.handler)(event, {}, done);
     });
   });
 
@@ -327,7 +337,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
@@ -361,10 +371,49 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
+          done();
+        });
+    });
+
+    it('should fail if user is not set', (done) => {
+      const request = mockMultiRequest(merge(mockConfig, {
+        'http://foo.com/user/repo/statuses/1234': {
+          verifyRequest: (opts) => {
+            expect(opts.body.state).toEqual('error');
+          }
+        },
+        'http://foo.com/user/repo/issues/2/comments': {
+          verifyRequest: (opts) => {
+            expect(opts.body.body).toContain('We could not parse the GitHub identity of the following contributors: Colin Eberhardt');
+          }
+        },
+        // the next is to download the commits for the PR
+        'http://foo.com/user/repo/pulls/2/commits': {
+          body: [
+            {
+              sha: '1234',
+              commit: {
+                author: {
+                  name: 'Colin Eberhardt'
+                }
+              }
+              // removed the author element, to reproduce the issue
+            }
+          ]
+        }
+      }));
+
+      mock('request', request);
+      const lambda = require('../cla-bot/index');
+
+      adaptedLambda(lambda.handler)(event, {},
+        (err, result) => {
+          expect(err).toBeNull();
+          expect(result).not.toBeNull();
           done();
         });
     });
@@ -394,7 +443,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('CLA has not been signed by users @foo, added a comment to http://foo.com/user/repo/pulls/2');
@@ -417,7 +466,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('CLA has not been signed by users @foo, @bob, added a comment to http://foo.com/user/repo/pulls/2');
@@ -440,7 +489,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('CLA has not been signed by users @bob, added a comment to http://foo.com/user/repo/pulls/2');
@@ -474,7 +523,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err) => {
           expect(err).toBeNull();
           done();
@@ -511,7 +560,7 @@ describe('lambda function', () => {
 
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('the cla-bot summoned itself. Ignored!');
@@ -556,7 +605,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
@@ -595,7 +644,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('added label cla-signed to http://foo.com/user/repo/pulls/2');
@@ -638,7 +687,7 @@ describe('lambda function', () => {
       mock('request', request);
       const lambda = require('../cla-bot/index');
 
-      lambda.handler(event, {},
+      adaptedLambda(lambda.handler)(event, {},
         (err, result) => {
           expect(err).toBeNull();
           expect(result.message).toEqual('CLA has not been signed by users @foo, added a comment to http://foo.com/user/repo/pulls/2');

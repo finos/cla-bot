@@ -53,12 +53,12 @@ exports.getCommits = ({ gitHubUrls }) => ({
   method: 'GET'
 });
 
-exports.setStatus = ({ webhook, gitHubUrls, correlationKey, headSha }, state) => ({
+exports.setStatus = ({ webhook, gitHubUrls, logUrl, headSha }, state) => ({
   url: `${webhook.repository.url}/statuses/${headSha}`,
   body: {
     state,
     context: 'verification/cla-signed',
-    target_url: `${process.env.LOG_URL}?correlationKey=${correlationKey}`
+    target_url: `https://s3.amazonaws.com/${process.env.LOGGING_BUCKET}/${logUrl}`
   }
 });
 
@@ -69,9 +69,20 @@ exports.addRecheckComment = ({ gitHubUrls, config }) => ({
   }
 });
 
-exports.addComment = ({ gitHubUrls, config }, usersWithoutCLA) => {
+exports.addCommentNoCLA = ({ gitHubUrls, config }, usersWithoutCLA) => {
   const template = handlebars.compile(config.message);
   const message = template({ usersWithoutCLA });
+  return ({
+    url: `${gitHubUrls.issue}/comments`,
+    body: {
+      body: message
+    }
+  });
+};
+
+exports.addCommentNoEmail = ({ gitHubUrls, config }, unidentifiedUsers) => {
+  const template = handlebars.compile(config.messageMissingEmail);
+  const message = template({ unidentifiedUsers });
   return ({
     url: `${gitHubUrls.issue}/comments`,
     body: {

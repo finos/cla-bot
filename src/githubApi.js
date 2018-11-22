@@ -78,13 +78,23 @@ exports.addRecheckComment = (issueUrl, recheckComment) => ({
   }
 });
 
-exports.addComment = (issueUrl, message, usersWithoutCLA) => {
+exports.addCommentNoCLA = (issueUrl, message, usersWithoutCLA) => {
   // TODO: move this logic out of this file
   const template = handlebars.compile(message);
   return {
     url: `${issueUrl}/comments`,
     body: {
       body: template({ usersWithoutCLA })
+    }
+  };
+};
+
+exports.addCommentUnidentified = (issueUrl, message, unidentifiedUsers) => {
+  const template = handlebars.compile(message);
+  return {
+    url: `${issueUrl}/comments`,
+    body: {
+      body: template({ unidentifiedUsers })
     }
   };
 };

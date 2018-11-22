@@ -1,4 +1,5 @@
 {
+  "messageMissingEmail": "Thank you for your pull request and welcome to our community. We could not parse the GitHub identity of the following contributors: **{{unidentifiedUsers}}**.\nThis is most likely caused by a git client misconfiguration; please make sure to:\n1. check if your git client is configured with an email to sign commits `git config --list | grep email`\n2. If not, set it up using `git config --global user.email email@example.com`\n3. Make sure that the git commit email is configured in your GitHub account settings, see https://github.com/settings/emails",
   "message": "Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\"t seem to have the users {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact the project maintainers to get yourself added.",
   "label": "cla-signed",
   "recheckComment": "The cla-bot has been summoned, and re-checked this pull request!"

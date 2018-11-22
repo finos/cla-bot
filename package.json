@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "execute:bot": "serverless invoke local --function cla-bot --path cla-bot/dev/event.json --stage dev",
+    "execute:bot": "serverless invoke local --function cla-bot --path src/dev/event.json --stage dev",
     "test": "npm run lint && jasmine",
     "lint": "eslint \"src/*.js\"",
     "prettier:fix": "prettier --write \"{src,spec}/**/*.js\""

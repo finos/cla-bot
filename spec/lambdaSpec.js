@@ -15,6 +15,9 @@ process.env.INTEGRATION_KEY = "spec/test-key.pem";
 process.env.INTEGRATION_ID = "2208";
 process.env.INTEGRATION_ENABLED = "true";
 process.env.BOT_NAME = "cla-bot";
+
+// suppress logging, and sending of logs to S3, when unit testing
+console.info = noop;
 process.env.JASMINE = true;
 
 // mocks the request package to return the given response (error, response, body)
@@ -725,9 +728,7 @@ describe("lambda function", () => {
           },
           "http://foo.com/user/repo/issues/2/comments": {
             verifyRequest: opts => {
-              expect(opts.body.body).toContain(
-                "Colin Eberhardt"
-              );
+              expect(opts.body.body).toContain("Colin Eberhardt");
             }
           },
           // the next is to download the commits for the PR
@@ -750,7 +751,9 @@ describe("lambda function", () => {
       const lambda = require("../src/index");
       adaptedLambda(lambda.handler)(event, {}, (err, result) => {
         expect(err).toBeNull();
-        expect(result).not.toBeNull();
+        expect(result.message).toEqual(
+          "CLA has not been signed by users Colin Eberhardt, added a comment to http://foo.com/user/repo/pulls/2"
+        );
         done();
       });
     });

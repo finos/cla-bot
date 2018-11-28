@@ -129,7 +129,8 @@ exports.handler = constructHandler(async webhook => {
     addLabel,
     getCommits,
     setStatus,
-    addComment,
+    addCommentNoCLA,
+    addCommentUnidentified,
     deleteLabel,
     addRecheckComment
   } = applyToken(token);
@@ -147,8 +148,11 @@ exports.handler = constructHandler(async webhook => {
   }
 
   logger.info(
-    `Obtaining .clabot configuration file from ${orgConfig.download_url}`
+    `Obtaining .clabot configuration file from ${
+      orgConfig.download_url.split("?")[0]
+    }`
   );
+
   const config = await getFile(orgConfig);
 
   if (!is.json(config)) {
@@ -173,39 +177,63 @@ exports.handler = constructHandler(async webhook => {
     headSha = commits[commits.length - 1].sha;
   }
 
-  const committers = sortUnique(commits.map(c => c.author.login.toLowerCase()));
-  const verifier = contributionVerifier(botConfig);
-  const nonContributors = await verifier(committers, token);
+  const unresolvedLogins = commits.filter(c => c.author == null);
+  const unresolvedLoginNames = sortUnique(
+    unresolvedLogins.map(c => c.commit.author.name)
+  );
 
   let message;
-  if (nonContributors.length === 0) {
+  if (unresolvedLoginNames.length > 0) {
+    const unidentifiedString = unresolvedLoginNames.map(u => `${u}`).join(", ");
     logger.info(
-      "All contributors have a signed CLA, adding success status to the pull request and a label"
+      `Some commits from the following contributors are not signed with a validate email address: ${unidentifiedString}. `
     );
-
-    const labels = await getLabels(issueUrl);
-
-    // check whether this label already exists
-    if (!labels.some(l => l.name === botConfig.label)) {
-      await addLabel(issueUrl, botConfig.label);
-    } else {
-      logger.info(`The pull request already has the label ${botConfig.label}`);
-    }
-
-    await setStatus(webhook, headSha, "success", logFile);
-
-    message = `added label ${botConfig.label} to ${pullRequestUrl}`;
-  } else {
-    const usersWithoutCLA = nonContributors
-      .map(contributorId => `@${contributorId}`)
-      .join(", ");
-    logger.info(
-      `The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`
+    await addCommentUnidentified(
+      issueUrl,
+      botConfig.messageMissingEmail,
+      unidentifiedString
     );
-    await addComment(issueUrl, botConfig.message, usersWithoutCLA);
     await deleteLabel(issueUrl, botConfig.label);
     await setStatus(webhook, headSha, "error", logFile);
-    message = `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${pullRequestUrl}`;
+    message = `CLA has not been signed by users ${unidentifiedString}, added a comment to ${pullRequestUrl}`;
+  } else {
+    const committers = sortUnique(
+      commits.map(c => c.author.login.toLowerCase())
+    );
+    const verifier = contributionVerifier(botConfig);
+    const nonContributors = await verifier(committers, token);
+
+    if (nonContributors.length === 0) {
+      logger.info(
+        "All contributors have a signed CLA, adding success status to the pull request and a label"
+      );
+
+      const labels = await getLabels(issueUrl);
+
+      // check whether this label already exists
+      if (!labels.some(l => l.name === botConfig.label)) {
+        await addLabel(issueUrl, botConfig.label);
+      } else {
+        logger.info(
+          `The pull request already has the label ${botConfig.label}`
+        );
+      }
+
+      await setStatus(webhook, headSha, "success", logFile);
+
+      message = `added label ${botConfig.label} to ${pullRequestUrl}`;
+    } else {
+      const usersWithoutCLA = nonContributors
+        .map(contributorId => `@${contributorId}`)
+        .join(", ");
+      logger.info(
+        `The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`
+      );
+      await addCommentNoCLA(issueUrl, botConfig.message, usersWithoutCLA);
+      await deleteLabel(issueUrl, botConfig.label);
+      await setStatus(webhook, headSha, "error", logFile);
+      message = `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${pullRequestUrl}`;
+    }
   }
 
   if (webhook.action === "created") {

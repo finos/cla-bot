@@ -9,12 +9,12 @@ provider:
       Action:
         - s3:PutObject
         - s3:PutObjectAcl
-      Resource: "arn:aws:s3:::${file(./cla-bot/serverless.env.yml):${opt:stage}.LOGGING_BUCKET}/*"
-      
+      Resource: "arn:aws:s3:::${file(./src/serverless.env.yml):${opt:stage}.LOGGING_BUCKET}/*"
+
 functions:
   cla-bot:
-    handler: cla-bot/index.handler
-    environment: ${file(./cla-bot/serverless.env.yml):${opt:stage}}
+    handler: src/index.handler
+    environment: ${file(./src/serverless.env.yml):${opt:stage}}
     events:
       - http:
           path: cla-check

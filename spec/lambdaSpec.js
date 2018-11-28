@@ -713,6 +713,48 @@ describe("lambda function", () => {
       });
     });
   });
+
+  describe("check unidentified contributors", () => {
+    it("should fail if user is not set", done => {
+      const request = mockMultiRequest(
+        merge(mockConfig, {
+          "http://foo.com/user/repo/statuses/1234": {
+            verifyRequest: opts => {
+              expect(opts.body.state).toEqual("error");
+            }
+          },
+          "http://foo.com/user/repo/issues/2/comments": {
+            verifyRequest: opts => {
+              expect(opts.body.body).toContain(
+                "Colin Eberhardt"
+              );
+            }
+          },
+          // the next is to download the commits for the PR
+          "http://foo.com/user/repo/pulls/2/commits": {
+            body: [
+              {
+                sha: "1234",
+                commit: {
+                  author: {
+                    name: "Colin Eberhardt"
+                  }
+                }
+                // removed the author element, to reproduce the issue
+              }
+            ]
+          }
+        })
+      );
+      mock("request", request);
+      const lambda = require("../src/index");
+      adaptedLambda(lambda.handler)(event, {}, (err, result) => {
+        expect(err).toBeNull();
+        expect(result).not.toBeNull();
+        done();
+      });
+    });
+  });
 });
 
 describe("contributionVerifier", () => {

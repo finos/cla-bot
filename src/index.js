@@ -177,25 +177,28 @@ exports.handler = constructHandler(async webhook => {
     headSha = commits[commits.length - 1].sha;
   }
 
-  const unresolvedLogins = commits.filter(c => c.author == null);
   const unresolvedLoginNames = sortUnique(
-    unresolvedLogins.map(c => c.commit.author.name)
+    commits.filter(c => c.author == null).map(c => c.commit.author.name)
   );
+
+  const removeLabelAndSetFailureStatus = async users => {
+    await deleteLabel(issueUrl, botConfig.label);
+    await setStatus(webhook, headSha, "error", logFile);
+    return `CLA has not been signed by users ${users}, added a comment to ${pullRequestUrl}`;
+  };
 
   let message;
   if (unresolvedLoginNames.length > 0) {
-    const unidentifiedString = unresolvedLoginNames.map(u => `${u}`).join(", ");
+    const unidentifiedString = unresolvedLoginNames.join(", ");
     logger.info(
-      `Some commits from the following contributors are not signed with a validate email address: ${unidentifiedString}. `
+      `Some commits from the following contributors are not signed with a valid email address: ${unidentifiedString}. `
     );
     await addCommentUnidentified(
       issueUrl,
       botConfig.messageMissingEmail,
       unidentifiedString
     );
-    await deleteLabel(issueUrl, botConfig.label);
-    await setStatus(webhook, headSha, "error", logFile);
-    message = `CLA has not been signed by users ${unidentifiedString}, added a comment to ${pullRequestUrl}`;
+    message = await removeLabelAndSetFailureStatus(unidentifiedString);
   } else {
     const committers = sortUnique(
       commits.map(c => c.author.login.toLowerCase())
@@ -230,9 +233,8 @@ exports.handler = constructHandler(async webhook => {
         `The contributors ${usersWithoutCLA} have not signed the CLA, adding error status to the pull request`
       );
       await addCommentNoCLA(issueUrl, botConfig.message, usersWithoutCLA);
-      await deleteLabel(issueUrl, botConfig.label);
-      await setStatus(webhook, headSha, "error", logFile);
-      message = `CLA has not been signed by users ${usersWithoutCLA}, added a comment to ${pullRequestUrl}`;
+
+      message = await removeLabelAndSetFailureStatus(usersWithoutCLA);
     }
   }
 

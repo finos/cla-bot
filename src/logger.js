@@ -42,7 +42,7 @@ const logger = {
       s3
         .putObject({
           Body: loggedMessages.join("\r\n"),
-          Bucket: "cla-bot",
+          Bucket: process.env.LOGGING_BUCKET,
           Key: logFile,
           ACL: "public-read",
           ContentType: "text/plain"
@@ -51,7 +51,7 @@ const logger = {
       s3
         .putObject({
           Body: detailedLoggedMessages.join("\r\n"),
-          Bucket: "cla-bot",
+          Bucket: process.env.LOGGING_BUCKET,
           Key: `${id}-DEBUG`,
           ACL: "public-read",
           ContentType: "text/plain"

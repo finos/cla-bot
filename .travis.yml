@@ -14,11 +14,8 @@ before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes
 deploy:
   - provider: script
     skip_cleanup: true
-    script: serverless deploy --stage staging
+    script: serverless deploy --stage $TRAVIS_BRANCH
     on:
-      branch: develop
-  # - provider: script
-  #   skip_cleanup: true
-  #   script: serverless deploy --stage prod
-  #   on:
-  #     branch: master
+      condition: $TRAVIS_BRANCH -eq "develop"
+      # TODO - enable it for prod env.
+      # condition: $TRAVIS_BRANCH -eq "master" || $TRAVIS_BRANCH -eq "develop"

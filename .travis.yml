@@ -2,8 +2,23 @@ language: node_js
 node_js:
 - '8'
 
+env:
+  global:
+    # travis encrypt AWS_ACCESS_KEY_ID=
+    - secure: "crN8vy/pBhAvfrKaz5thwOQw2cJTH88y7/HzZonqisxgGDH/ZeVDVW1XRjiHBSegZM9eJoKaCDVfWfm2UiJsAWvIn6N1I0fYuccMARkptGK5+0sOUk1B/spP6SbnDyyvXJhK2gRt/A5QivKUH8o110IOj+RI/WyZ1pZfhz1XIGfj1ZvpFe5ew1ClEEFrTfuWp+vzz0ajzQCue+Ofcrbk7OPeKWWT7qEFNed9eZrddxlCcsaK6KfuqPy8J3oaNwXZ7QM1K/K2RanX3dVbxt71GbAlXHAiAmYfZvJLLlOFManxoOdd62rPT+fY7lclw/A0EazTZ7ewXvk/tVx8dUpkigUi3G8I8IF+Ypb9iaau+hOfRAGWbyYx0mw6dnYLpX7NGX3Z29jUYcKYHTYYSBV34U06JxnA/xBxZyTfWOVww5agG1MEN6rA9PwtPoKcRcXUUznM2NfGg0yDheUe97EUPZ+wpfC1SYTWfj2g0exHDw/O2gKJYGm6qR5AxbAHyNdRZcF4m8ZdqI86TykQcl2dmSikKxPb00K2eQkUgJJRgTo2BNVQRZl3btphB6mipok+vcvVcOdMBTizljsp1KMYPzoEozIxToOUHqY6pEkv9r5AEtYIzLZOpearJUQZXMr1KiP1XELr6rRsffVNQiGjfNmalgJzUH604cC5DdWxSAA="
+    # travis encrypt AWS_SECRET_ACCESS_KEY=
+    - secure: "BuwQOIbGpdNzv1mUkHYzCgqZyxI6ji3wnvsQyiw85Mdc6YrceSFs5B40SqSGc39apnGAv+RSL4/cQnTQC4doScwS0YyQTNWAxY2VXrR6CG9fg1vinQcxC3pNDrCeiE40ZWw69UdXowQuosSXk9KgKJUdX3VFhSoHMKrvSU1s1T+8q0Y28TROFJnBMMePDwXukYREs2xiILfF8XdN7dOf0h6Vf/DLHw8/tj4Lnq40ENASoeS73Dz6I9A6ShYTeweIwrTUlwVOOlcjzZBsIFG6PSMoG5ilnW7pM3qxErmFgf5zJhxPxvHxz+ib+A6iqATSLVmgE2dNECrKwuhmYdpwR+Mt4Z0uyKhFLubjM1bBpOHdjBM/iNunh6MotfdOMK5rQsG3JiPCTA0uOHahwEp2NO+cEHNpURb4BsrwR6rpZlYdxkVJFX5oSALVzuaf8bci4x+p63f9Xc6YfKPgFP2dFuJj1UQBmsmVWcNQ4ig4Bs2qe/W1BPPhPaAmi75iHs8bWily24K4sy6tViaNf+VHiT0OARXZx0/OzYjV4QkjAoPP9tv0EYLA3uRLM0DLS50Xrh+hheU049GAfJyXPimXXN+kJ8SVKE5AeyFYTwWU8m7OHMou7KFDixIMR7d2HGpNWF6hSd0tsdwuA+WLNNfzg+BXCKnP+HNhd+GIvYnyCX4="
+
 before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_1455fc9ea2db_key -iv $encrypted_1455fc9ea2db_iv -in serverless.env.yml.enc -out src/serverless.env.yml -d; fi"
 
-after_success:
- - test $TRAVIS_BRANCH = "develop" && serverless deploy --stage staging
- # - test $TRAVIS_BRANCH = "master" && serverless deploy --stage prod
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: serverless deploy --stage staging
+    on:
+      branch: develop
+  # - provider: script
+  #   skip_cleanup: true
+  #   script: serverless deploy --stage prod
+  #   on:
+  #     branch: master

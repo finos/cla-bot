@@ -26,6 +26,4 @@ deploy:
     script: serverless deploy --stage $TRAVIS_BRANCH
     on:
       all_branches: true
-      condition: $TRAVIS_BRANCH -eq "staging"
-      # TODO - enable it for prod env.
-      # condition: $TRAVIS_BRANCH -eq "prod" || $TRAVIS_BRANCH -eq "staging"
+      condition: $TRAVIS_BRANCH -eq "prod" || $TRAVIS_BRANCH -eq "staging"

@@ -104,7 +104,7 @@ exports.handler = constructHandler(async webhook => {
   const logFile = `https://s3.amazonaws.com/${
     process.env.LOGGING_BUCKET
   }/${logUrl}`;
-  logger.logFile(logFile);
+  logger.logFile(logUrl);
 
   if (webhook.action === "created") {
     if (!commentSummonsBot(webhook.comment.body)) {

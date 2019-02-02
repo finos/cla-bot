@@ -1,5 +1,0 @@
-{
-  "message": "Thank you for your pull request and welcome to our community. We require contributors to sign our Contributor License Agreement, and we don\"t seem to have the users {{usersWithoutCLA}} on file. In order for us to review and merge your code, please contact the project maintainers to get yourself added.",
-  "label": "cla-signed",
-  "recheckComment": "The cla-bot has been summoned, and re-checked this pull request!"
-}

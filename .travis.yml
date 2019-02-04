@@ -22,6 +22,7 @@ before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes
 
 install:
   - npm install --production
+  - npm install --save node-license-validator
 
 script:  
   - npm run validate-license

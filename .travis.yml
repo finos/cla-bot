@@ -21,6 +21,7 @@ env:
 before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_1455fc9ea2db_key -iv $encrypted_1455fc9ea2db_iv -in serverless.env.yml.enc -out src/serverless.env.yml -d; fi"
 
 install:
+  - rm -rf node_modules
   - npm install --production
   - npm install --save node-license-validator
 

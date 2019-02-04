@@ -7,11 +7,16 @@
     "execute:bot": "serverless invoke local --function cla-bot --path src/dev/event.json --stage dev",
     "test": "npm run lint && jasmine",
     "lint": "eslint \"src/*.js\"",
-    "prettier:fix": "prettier --write \"{src,spec}/**/*.js\""
+    "prettier:fix": "prettier --write \"{src,spec}/**/*.js\"",
+    "validate-license": "node-license-validator . --allow-licenses MIT ISC Apache 'Apache 2.0' BSD BSD-2-Clause BSD-3-Clause  MIT/X11 Unlicense"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Colin Eberhardth <ceberhardt@scottlogic.co.uk> (https://www.scottlogic.com)",
+  "contributors": [
+    "Maurizio Pillitu <maoo@finos.org> (https://finos.org)"
+  ],
+  "license": "Apache-2.0",
   "devDependencies": {
+    "node-license-validator": "^1.3.0",
     "dotenv": "^4.0.0",
     "eslint": "^5.2.0",
     "eslint-plugin-prettier": "^2.6.2",

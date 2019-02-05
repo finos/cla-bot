@@ -7,11 +7,16 @@
     "execute:bot": "serverless invoke local --function cla-bot --path src/dev/event.json --stage dev",
     "test": "npm run lint && jasmine",
     "lint": "eslint \"src/*.js\"",
-    "prettier:fix": "prettier --write \"{src,spec}/**/*.js\""
+    "prettier:fix": "prettier --write \"{src,spec}/**/*.js\"",
+    "validate-license": "node-license-validator . --allow-licenses MIT ISC Apache 'Apache 2.0' BSD BSD-2-Clause BSD-3-Clause  MIT/X11 Unlicense"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Colin Eberhardth <ceberhardt@scottlogic.co.uk> (https://www.scottlogic.com)",
+  "contributors": [
+    "Maurizio Pillitu <maoo@finos.org> (https://finos.org)"
+  ],
+  "license": "Apache-2.0",
   "devDependencies": {
+    "node-license-validator": "^1.3.0",
     "dotenv": "^4.0.0",
     "eslint": "^5.2.0",
     "eslint-plugin-prettier": "^2.6.2",
@@ -19,13 +24,13 @@
     "jasmine-spec-reporter": "^4.1.0",
     "mock-require": "^2.0.2",
     "prettier": "^1.13.7",
-    "serverless": "^1.27.3"
+    "serverless": "^1.34.1"
   },
   "dependencies": {
     "aws-sdk": "^2.149.0",
     "handlebars": "^4.0.10",
     "is_js": "^0.9.0",
-    "jsonwebtoken": "^7.4.0",
+    "jsonwebtoken": "^8.4.0",
     "parse-github-url": "^0.3.2",
     "request": "^2.81.0",
     "uuid": "^3.1.0"

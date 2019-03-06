@@ -33,7 +33,12 @@ script:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: serverless deploy --stage $TRAVIS_BRANCH
+    script: serverless deploy --stage staging
     on:
-      all_branches: true
-      condition: $TRAVIS_BRANCH -eq "prod" || $TRAVIS_BRANCH -eq "staging"
+      branch: finos-deployment-staging
+  # TODO - enable when tested on staging
+  # - provider: script
+  #   skip_cleanup: true
+  #   script: serverless deploy --stage prod
+  #   on:
+  #     branch: finos-deployment-prod

@@ -2,7 +2,7 @@ service: cla-bot
 
 resources:
   Resources:
-    S3BucketPhotos:
+    S3BucketLogs:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${file(./src/serverless.env.yml):${opt:stage}.LOGGING_BUCKET}

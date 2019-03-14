@@ -272,7 +272,7 @@ describe("lambda function", () => {
           "http://foo.com/user/repo/statuses/1234": {
             verifyRequest: opts => {
               // ensure the status is reported as a failure
-              expect(opts.body.state).toEqual("failure");
+              expect(opts.body.state).toEqual("error");
             }
           }
         })

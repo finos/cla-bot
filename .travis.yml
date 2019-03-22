@@ -36,9 +36,8 @@ deploy:
     script: serverless deploy --stage staging
     on:
       branch: finos-deployment-staging
-  # TODO - enable when tested on staging
-  # - provider: script
-  #   skip_cleanup: true
-  #   script: serverless deploy --stage prod
-  #   on:
-  #     branch: finos-deployment-prod
+  - provider: script
+    skip_cleanup: true
+    script: serverless deploy --stage prod
+    on:
+      branch: finos-deployment-prod

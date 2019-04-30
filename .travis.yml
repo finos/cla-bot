@@ -25,7 +25,7 @@ install:
   - npm install --production
   - npm install -g node-license-validator
 
-script:  
+script:
   - npm run validate-license
   - npm install
   - npm test
@@ -35,10 +35,9 @@ deploy:
     skip_cleanup: true
     script: serverless deploy --stage staging
     on:
-      branch: finos-deployment-staging
-  # TODO - enable when tested on staging
-  # - provider: script
-  #   skip_cleanup: true
-  #   script: serverless deploy --stage prod
-  #   on:
-  #     branch: finos-deployment-prod
+      branch: develop
+  - provider: script
+    skip_cleanup: true
+    script: serverless deploy --stage prod
+    on:
+      branch: master

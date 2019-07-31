@@ -22,7 +22,7 @@
     "eslint-plugin-prettier": "^2.6.2",
     "jasmine": "^2.6.0",
     "jasmine-spec-reporter": "^4.1.0",
-    "mock-require": "^2.0.2",
+    "mock-require": "^3.0.3",
     "prettier": "^1.13.7",
     "serverless": "^1.34.1"
   },

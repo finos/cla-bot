@@ -19,6 +19,8 @@ For installation instructions and a user guide, please refer to the [project pag
 
 ## License
 
+Copyright (c) 2019 Colin Eberhardt
+
 The code in this repository is distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-Copyright (c) 2019 Colin Eberhardt
+SPDX-License-Identifier: [Apache-2.0](https://spdx.org/licenses/Apache-2.0)

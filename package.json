@@ -27,7 +27,7 @@
     "serverless": "^1.34.1"
   },
   "dependencies": {
-    "aws-sdk": "^2.149.0",
+    "aws-sdk": "^2.504.0",
     "handlebars": "^4.0.10",
     "is_js": "^0.9.0",
     "jsonwebtoken": "^8.4.0",

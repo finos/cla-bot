@@ -27,6 +27,7 @@
     "serverless": "^1.34.1"
   },
   "dependencies": {
+    "bootstrap" : "4.3.0",
     "aws-sdk": "^2.149.0",
     "handlebars": "^4.0.10",
     "is_js": "^0.9.0",

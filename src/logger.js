@@ -31,6 +31,8 @@ const logger = {
     logMessage("ERROR", message, detail);
   },
   logFile(filename) {
+    loggedMessages.length = [];
+    detailedLoggedMessages.length = [];
     logFile = filename;
   },
   flush() {
@@ -52,7 +54,7 @@ const logger = {
         .putObject({
           Body: detailedLoggedMessages.join("\r\n"),
           Bucket: process.env.LOGGING_BUCKET,
-          Key: `${id}-DEBUG`,
+          Key: `${logFile}-DEBUG`,
           ACL: "public-read",
           ContentType: "text/plain"
         })

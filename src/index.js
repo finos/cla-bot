@@ -135,6 +135,25 @@ exports.handler = constructHandler(async webhook => {
     addRecheckComment
   } = applyToken(token);
 
+  logger.info("Obtaining the list of commits for the pull request");
+  const commits = await getCommits(pullRequestUrl);
+
+  logger.info(
+    `Total Commits: ${commits.length}, checking CLA status for committers`
+  );
+
+  // PRs include the head sha, for comments we have to determine this from the commit history
+  let headSha;
+  if (webhook.pull_request) {
+    headSha = webhook.pull_request.head.sha;
+  } else {
+    headSha = commits[commits.length - 1].sha;
+  }
+
+  const unresolvedLoginNames = sortUnique(
+    commits.filter(c => c.author == null).map(c => c.commit.author.name)
+  );
+
   let orgConfig;
   try {
     logger.info("Attempting to obtain organisation level .clabot file URL");
@@ -156,30 +175,13 @@ exports.handler = constructHandler(async webhook => {
   const config = await getFile(orgConfig);
 
   if (!is.json(config)) {
+    logger.error("The .clabot file is not valid JSON");
+    await setStatus(webhook, headSha, "error", logFile);
     throw new Error("The .clabot file is not valid JSON");
   }
 
   // merge with default config options
   const botConfig = Object.assign({}, defaultConfig, config);
-
-  logger.info("Obtaining the list of commits for the pull request");
-  const commits = await getCommits(pullRequestUrl);
-
-  logger.info(
-    `Total Commits: ${commits.length}, checking CLA status for committers`
-  );
-
-  // PRs include the head sha, for comments we have to determine this from the commit history
-  let headSha;
-  if (webhook.pull_request) {
-    headSha = webhook.pull_request.head.sha;
-  } else {
-    headSha = commits[commits.length - 1].sha;
-  }
-
-  const unresolvedLoginNames = sortUnique(
-    commits.filter(c => c.author == null).map(c => c.commit.author.name)
-  );
 
   const removeLabelAndSetFailureStatus = async users => {
     await deleteLabel(issueUrl, botConfig.label);

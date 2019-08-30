@@ -2,17 +2,18 @@ const requestp = require("./requestAsPromise");
 const is = require("is_js");
 const { githubRequest, getFile } = require("./githubApi");
 
-const contributorArrayVerifier = contributors => committers =>
+const contributorArrayVerifier = (contributors, emailDomains) => committers =>
   Promise.resolve(
     committers.filter(
-      c => contributors.map(v => v.toLowerCase()).indexOf(c) === -1
+      c =>
+        contributors.map(v => v.toLowerCase()).indexOf(c) === -1 ||
+        (emailDomains && !emailDomains.includes(c.split("@")[1]))
     )
   );
 
-const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
-  committers,
-  clabotToken
-) =>
+const configFileFromGithubUrlVerifier = (
+  contributorListGithubUrl,
+  emailDomains) => (committers, clabotToken) =>
   githubRequest(
     {
       url: contributorListGithubUrl,
@@ -21,13 +22,17 @@ const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
     clabotToken
   )
     .then(body => githubRequest(getFile(body), clabotToken))
-    .then(contributors => contributorArrayVerifier(contributors)(committers));
+    .then(contributors => 
+      contributorArrayVerifier(contributors, emailDomains)(committers));
 
-const configFileFromUrlVerifier = contributorListUrl => committers =>
+const configFileFromUrlVerifier = (
+  contributorListUrl, 
+  emailDomains) => committers =>
   requestp({
     url: contributorListUrl,
     json: true
-  }).then(contributors => contributorArrayVerifier(contributors)(committers));
+  }).then(contributors =>
+    contributorArrayVerifier(contributors, emailDomains)(committers));
 
 const webhookVerifier = webhookUrl => committers =>
   Promise.all(
@@ -65,7 +70,9 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the list supplied in the .clabot file"
       );
-      return contributorArrayVerifier(configCopy.contributors);
+      return contributorArrayVerifier(
+        configCopy.contributors,
+        configCopy.contributorEmailDomainList);
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("api.github.com") !== -1
@@ -74,7 +81,9 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the github URL supplied in the .clabot file"
       );
-      return configFileFromGithubUrlVerifier(configCopy.contributors);
+      return configFileFromGithubUrlVerifier(
+        configCopy.contributors,
+        configCopy.contributorEmailDomainList);
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("?") !== -1
@@ -89,7 +98,9 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the URL supplied in the .clabot file"
       );
-      return configFileFromUrlVerifier(configCopy.contributors);
+      return configFileFromUrlVerifier(
+        configCopy.contributors,
+        configCopy.contributorEmailDomainList);
     }
   }
   throw new Error(

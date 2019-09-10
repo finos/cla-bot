@@ -13,7 +13,8 @@ const contributorArrayVerifier = (contributors, emailDomains) => committers =>
 
 const configFileFromGithubUrlVerifier = (
   contributorListGithubUrl,
-  emailDomains) => (committers, clabotToken) =>
+  emailDomains
+) => (committers, clabotToken) =>
   githubRequest(
     {
       url: contributorListGithubUrl,
@@ -22,17 +23,20 @@ const configFileFromGithubUrlVerifier = (
     clabotToken
   )
     .then(body => githubRequest(getFile(body), clabotToken))
-    .then(contributors => 
-      contributorArrayVerifier(contributors, emailDomains)(committers));
+    .then(contributors =>
+      contributorArrayVerifier(contributors, emailDomains)(committers)
+    );
 
 const configFileFromUrlVerifier = (
-  contributorListUrl, 
-  emailDomains) => committers =>
+  contributorListUrl,
+  emailDomains
+) => committers =>
   requestp({
     url: contributorListUrl,
     json: true
   }).then(contributors =>
-    contributorArrayVerifier(contributors, emailDomains)(committers));
+    contributorArrayVerifier(contributors, emailDomains)(committers)
+  );
 
 const webhookVerifier = webhookUrl => committers =>
   Promise.all(
@@ -72,7 +76,8 @@ module.exports = config => {
       );
       return contributorArrayVerifier(
         configCopy.contributors,
-        configCopy.contributorEmailDomainList);
+        configCopy.contributorEmailDomainList
+      );
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("api.github.com") !== -1
@@ -83,7 +88,8 @@ module.exports = config => {
       );
       return configFileFromGithubUrlVerifier(
         configCopy.contributors,
-        configCopy.contributorEmailDomainList);
+        configCopy.contributorEmailDomainList
+      );
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("?") !== -1
@@ -100,7 +106,8 @@ module.exports = config => {
       );
       return configFileFromUrlVerifier(
         configCopy.contributors,
-        configCopy.contributorEmailDomainList);
+        configCopy.contributorEmailDomainList
+      );
     }
   }
   throw new Error(

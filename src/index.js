@@ -101,9 +101,7 @@ exports.handler = constructHandler(async webhook => {
   // determine the URL for storing the event log
   const org = pullRequestUrl.split("/")[4];
   const logUrl = `${org}-${uuid()}`;
-  const logFile = `https://s3.amazonaws.com/${
-    process.env.LOGGING_BUCKET
-  }/${logUrl}`;
+  const logFile = `https://s3.amazonaws.com/${process.env.LOGGING_BUCKET}/${logUrl}`;
   logger.logFile(logUrl);
 
   if (webhook.action === "created") {

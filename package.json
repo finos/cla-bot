@@ -33,6 +33,6 @@
     "jsonwebtoken": "^8.4.0",
     "parse-github-url": "^0.3.2",
     "request": "^2.81.0",
-    "uuid": "^3.1.0"
+    "uuid": "^3.3.0"
   }
 }

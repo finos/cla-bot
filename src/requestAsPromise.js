@@ -18,7 +18,9 @@ module.exports = options =>
         });
         reject(
           new Error(
-            `API request ${options.url} failed with status ${response.statusCode}`
+            `API request ${options.url} failed with status ${
+              response.statusCode
+            }`
           )
         );
       } else {

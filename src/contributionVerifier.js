@@ -2,12 +2,18 @@ const requestp = require("./requestAsPromise");
 const is = require("is_js");
 const { githubRequest, getFile } = require("./githubApi");
 
-const contributorArrayVerifier = contributors => committers =>
-  Promise.resolve(
-    committers.filter(
-      c => contributors.map(v => v.toLowerCase()).indexOf(c) === -1
+const contributorArrayVerifier = contributors => committers => {
+  const res = committers
+    .filter(
+      c =>
+        // does the lowercase login match and of the lowercase contributors?
+        contributors
+          .map(v => v.toLowerCase())
+          .indexOf(c.login.toLowerCase()) === -1
     )
-  );
+    .map(c => c.login);
+  return Promise.resolve(res);
+};
 
 const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
   committers,
@@ -31,12 +37,12 @@ const configFileFromUrlVerifier = contributorListUrl => committers =>
 
 const webhookVerifier = webhookUrl => committers =>
   Promise.all(
-    committers.map(username =>
+    committers.map(committer =>
       requestp({
-        url: webhookUrl + username,
+        url: webhookUrl + committer.login,
         json: true
       }).then(response => ({
-        username,
+        username: committer.login,
         isContributor: response.isContributor
       }))
     )

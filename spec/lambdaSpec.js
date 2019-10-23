@@ -790,7 +790,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual([]);
         done();
       });
@@ -810,7 +812,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["billy"]);
         done();
       });
@@ -837,7 +841,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "foo"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "foo" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["foo"]);
         done();
       });
@@ -852,7 +858,9 @@ describe("contributionVerifier", () => {
 
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["bob"]);
         done();
       });
@@ -872,7 +880,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["billy"]);
         done();
       });
@@ -899,7 +909,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual([]);
         done();
       });
@@ -926,7 +938,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "foo"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "foo" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["foo"]);
         done();
       });

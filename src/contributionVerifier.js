@@ -2,16 +2,26 @@ const requestp = require("./requestAsPromise");
 const is = require("is_js");
 const { githubRequest, getFile } = require("./githubApi");
 
+// return the list of committers who are not know contributors
 const contributorArrayVerifier = contributors => committers => {
-  const res = committers
-    .filter(
-      c =>
-        // does the lowercase login match and of the lowercase contributors?
-        contributors
-          .map(v => v.toLowerCase())
-          .indexOf(c.login.toLowerCase()) === -1
-    )
-    .map(c => c.login);
+  const emailVerification = contributors
+    .filter(c => c.includes("@"))
+    .map(c => c.toLowerCase());
+  const usernameVerification = contributors
+    .filter(c => !c.includes("@"))
+    .map(c => c.toLowerCase());
+
+  const isValidContributor = c => {
+    if (c.email && emailVerification.includes(c.email.toLowerCase())) {
+      return true;
+    }
+    if (usernameVerification.includes(c.login.toLowerCase())) {
+      return true;
+    }
+    return false;
+  };
+
+  const res = committers.filter(c => !isValidContributor(c)).map(c => c.login);
   return Promise.resolve(res);
 };
 

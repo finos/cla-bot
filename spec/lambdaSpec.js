@@ -866,6 +866,22 @@ describe("contributionVerifier", () => {
       });
     });
 
+    it("should support verification via email address", done => {
+      const config = { contributors: ["billy@foo.com"] };
+
+      const verifier = require("../src/contributionVerifier");
+
+      const commiters = [
+        { email: "billy@foo.com", login: "billy" },
+        { email: "foo@bar.com", login: "foo" }
+      ];
+
+      verifier(config)(commiters).then(nonContributors => {
+        expect(nonContributors).toEqual(["foo"]);
+        done();
+      });
+    });
+
     it("should support detection of a contributor list from a URL", done => {
       const config = {
         contributors: "http://bar.com/contributors.txt"

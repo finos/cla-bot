@@ -58,20 +58,13 @@ const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
     clabotToken
   )
     .then(body => githubRequest(getFile(body), clabotToken))
-    .then(contributors =>
-      contributorArrayVerifier(contributors, emailDomains)(committers)
-    );
+    .then(contributors => contributorArrayVerifier(contributors)(committers));
 
-const configFileFromUrlVerifier = (
-  contributorListUrl,
-  emailDomains
-) => committers =>
+const configFileFromUrlVerifier = contributorListUrl => committers =>
   requestp({
     url: contributorListUrl,
     json: true
-  }).then(contributors =>
-    contributorArrayVerifier(contributors, emailDomains)(committers)
-  );
+  }).then(contributors => contributorArrayVerifier(contributors)(committers));
 
 const webhookVerifier = webhookUrl => committers =>
   Promise.all(
@@ -109,10 +102,7 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the list supplied in the .clabot file"
       );
-      return contributorArrayVerifier(
-        configCopy.contributors,
-        configCopy.contributorEmailDomainList
-      );
+      return contributorArrayVerifier(configCopy.contributors);
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("api.github.com") !== -1
@@ -121,10 +111,7 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the github URL supplied in the .clabot file"
       );
-      return configFileFromGithubUrlVerifier(
-        configCopy.contributors,
-        configCopy.contributorEmailDomainList
-      );
+      return configFileFromGithubUrlVerifier(configCopy.contributors);
     } else if (
       is.url(configCopy.contributors) &&
       configCopy.contributors.indexOf("?") !== -1
@@ -139,10 +126,7 @@ module.exports = config => {
         "INFO",
         "Checking contributors against the URL supplied in the .clabot file"
       );
-      return configFileFromUrlVerifier(
-        configCopy.contributors,
-        configCopy.contributorEmailDomainList
-      );
+      return configFileFromUrlVerifier(configCopy.contributors);
     }
   }
   throw new Error(

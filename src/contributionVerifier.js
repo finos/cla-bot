@@ -18,19 +18,17 @@ const domainFromEmail = email => "@" + email.split("@")[1];
 const contributorArrayVerifier = contributors => committers => {
   const lowerCaseContributors = contributors.map(c => c.toLowerCase());
   const [
-    emailVerification, 
+    emailVerification,
     usernameVerification
   ] = partition(
-    lowerCaseContributors,
-    c => c.includes("@")
+    lowerCaseContributors, c => c.includes("@")
   );
 
   const [
-    domainVerification, 
+    domainVerification,
     exactEmailVerification
   ] = partition(
-    emailVerification,
-    c => c.startsWith("@")
+    emailVerification, c => c.startsWith("@")
   );
 
   const isValidContributor = c => {

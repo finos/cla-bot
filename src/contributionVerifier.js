@@ -17,18 +17,14 @@ const domainFromEmail = email => "@" + email.split("@")[1];
 // return the list of committers who are not know contributors
 const contributorArrayVerifier = contributors => committers => {
   const lowerCaseContributors = contributors.map(c => c.toLowerCase());
-  const [
-    emailVerification,
-    usernameVerification
-  ] = partition(
-    lowerCaseContributors, c => c.includes("@")
+  const [emailVerification, usernameVerification] = partition(
+    lowerCaseContributors,
+    c => c.includes("@")
   );
 
-  const [
-    domainVerification,
-    exactEmailVerification
-  ] = partition(
-    emailVerification, c => c.startsWith("@")
+  const [domainVerification, exactEmailVerification] = partition(
+    emailVerification,
+    c => c.startsWith("@")
   );
 
   const isValidContributor = c => {

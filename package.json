@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "execute:bot": "serverless invoke local --function cla-bot --path src/dev/event.json --stage dev",
-    "test": "npm run lint && jasmine",
+    "test": "jasmine",
     "lint": "eslint \"src/*.js\"",
     "prettier:fix": "prettier --write \"{src,spec}/**/*.js\"",
     "validate-license": "node-license-validator . --allow-licenses MIT ISC Apache 'Apache 2.0' BSD BSD-2-Clause BSD-3-Clause  MIT/X11 Unlicense"

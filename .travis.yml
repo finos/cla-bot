@@ -35,9 +35,9 @@ deploy:
     skip_cleanup: true
     script: serverless deploy --stage staging
     on:
-      branch: develop
+      branch: finos-deployment-staging
   - provider: script
     skip_cleanup: true
     script: serverless deploy --stage prod
     on:
-      branch: master
+      branch: finos-deployment-prod

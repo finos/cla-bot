@@ -8,7 +8,8 @@
     "test": "npm run lint && jasmine",
     "lint": "eslint \"src/*.js\"",
     "prettier:fix": "prettier --write \"{src,spec}/**/*.js\"",
-    "validate-license": "node-license-validator . --allow-licenses MIT ISC Apache 'Apache 2.0' BSD BSD-2-Clause BSD-3-Clause  MIT/X11 Unlicense"
+    "validate-license": "node-license-validator . --allow-licenses MIT ISC Apache 'Apache 2.0' BSD BSD-2-Clause BSD-3-Clause  MIT/X11 Unlicense",
+    "test-pr": "echo This is a test PR! Do not merge!"
   },
   "author": "Colin Eberhardth <ceberhardt@scottlogic.co.uk> (https://www.scottlogic.com)",
   "contributors": [

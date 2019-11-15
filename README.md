@@ -1,3 +1,5 @@
+Testing WhiteSource scanning! see https://finosfoundation.atlassian.net/browse/ODP-106
+
 # CLA Bot
 
 See the [project page](https://colineberhardt.github.io/cla-bot/) for details.

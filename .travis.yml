@@ -18,7 +18,7 @@ env:
     - secure: "vu0Co4m0mrOqo6FO/m4WMqPw5Y3XbrcFRIknmyc80vQAN0QR3/RejhFFyzFs3imRV5QtTG5od4wY3cNb1dsltVbjvvk3LqhAud9f/vXX2cHmQIjXoWY0pAcDULH/XTgs4aoZN1xJPuDzjH74b/GIBBtkQi8s//C9ekRntlHfA9m9Lzu8VzyK+vZTnfNi1492jYerHkP1p4Z7vpsaWnZNJhkn7bhP9vfUjXalRTaqhV/lYdSpjaC9Sh3yopoHkAR69Ji05HNb1+4HLH9v0M91ts0n23Zxq/yV2GQB6kJuGOWUiQucBnxHRhcG9JCMruR8CmQo9mL90ggASyiaSWt0dawgcqH5qWxZxvktwKaKINAr74Eso5wYYeEkiOeUvxGk08g8hTv0mciz0CmzQyILo3WWYVYjAA4m6CFsHjGSXWbTDMmG6NcPTpjpO4kwdrfLEtnb+uRQ1wxO8SIQMt5WCzTombvS7zlLemP8DfvUarJ8PDx9ZUBYg3XGGMMCG5TIDDFn1UxNXAUGUJbnnuLQ1wvcJ9Wzllanvu3E98+opE/Vva8/16TaQZJczsF42kNXNDFVKMWYhfhHMNJ7ehhEz1vc5SdpstF4WM5lNl3xpeuStc0a1DRRdOvdyWRA+OoPmGOBAIKYol64FzWE9rSE6EykavdcztllKdlp1k5uBGE="
 
 # tar cvzf secrets.tar src/serverless.env.yml ; travis encrypt-file secrets.tar
-before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_92fe0ef674ee_key -iv $encrypted_92fe0ef674ee_iv -in secrets.tar.enc -out secrets.tar -d; tar xvf secrets.tar; fi"
+before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_1455fc9ea2db_key -iv $encrypted_1455fc9ea2db_iv -in secrets.tar.enc -out secrets.tar -d; tar xvf secrets.tar; fi"
 
 install:
   - rm -rf node_modules

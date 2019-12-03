@@ -1,14 +1,44 @@
 const requestp = require("./requestAsPromise");
 const is = require("is_js");
 const { githubRequest, getFile } = require("./githubApi");
-
-const contributorArrayVerifier = contributors => committers =>
-  Promise.resolve(
-    committers.filter(
-      c => contributors.map(v => v.toLowerCase()).indexOf(c) === -1
-    )
+// see: https://stackoverflow.com/a/47225591/249933
+function partition(array, isValid) {
+  return array.reduce(
+    ([pass, fail], elem) => {
+      return isValid(elem) ? [[...pass, elem], fail] : [pass, [...fail, elem]];
+    },
+    [[], []]
   );
-
+}
+const domainFromEmail = email => "@" + email.split("@")[1];
+// return the list of committers who are not know contributors
+const contributorArrayVerifier = contributors => committers => {
+  const lowerCaseContributors = contributors.map(c => c.toLowerCase());
+  const [
+    emailVerification,
+    usernameVerification
+  ] = partition(lowerCaseContributors, c => c.includes("@"));
+  const [
+    domainVerification,
+    exactEmailVerification
+  ] = partition(emailVerification, c => c.startsWith("@"));
+  const isValidContributor = c => {
+    if (c.email) {
+      if (exactEmailVerification.includes(c.email.toLowerCase())) {
+        return true;
+      }
+      if (domainVerification.includes(domainFromEmail(c.email))) {
+        return true;
+      }
+    }
+    if (usernameVerification.includes(c.login.toLowerCase())) {
+      return true;
+    }
+    return false;
+  };
+  const res = committers.filter(c => !isValidContributor(c)).map(c => c.login);
+  return Promise.resolve(res);
+};
 const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
   committers,
   clabotToken
@@ -22,21 +52,19 @@ const configFileFromGithubUrlVerifier = contributorListGithubUrl => (
   )
     .then(body => githubRequest(getFile(body), clabotToken))
     .then(contributors => contributorArrayVerifier(contributors)(committers));
-
 const configFileFromUrlVerifier = contributorListUrl => committers =>
   requestp({
     url: contributorListUrl,
     json: true
   }).then(contributors => contributorArrayVerifier(contributors)(committers));
-
 const webhookVerifier = webhookUrl => committers =>
   Promise.all(
-    committers.map(username =>
+    committers.map(committer =>
       requestp({
-        url: webhookUrl + username,
+        url: webhookUrl + committer.login,
         json: true
       }).then(response => ({
-        username,
+        username: committer.login,
         isContributor: response.isContributor
       }))
     )
@@ -46,10 +74,8 @@ const webhookVerifier = webhookUrl => committers =>
       .map(r => r.username);
     return contributorArrayVerifier(contributors)(committers);
   });
-
 module.exports = config => {
   const configCopy = Object.assign({}, config);
-
   // handle the 'legacy' configuration where each type had its own propery
   if (configCopy.contributorListGithubUrl) {
     configCopy.contributors = configCopy.contributorListGithubUrl;
@@ -58,7 +84,6 @@ module.exports = config => {
   } else if (config.contributorWebhook) {
     configCopy.contributors = configCopy.contributorWebhook;
   }
-
   if (configCopy.contributors) {
     if (is.array(configCopy.contributors)) {
       console.info(

@@ -1,5 +1,7 @@
 # CLA Bot
 
+[![FINOS - Active](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-active.svg)](https://finosfoundation.atlassian.net/wiki/display/FINOS/Active)
+
 See the [project page](https://colineberhardt.github.io/cla-bot/) for details.
 
 cla-bot is a GitHub bot for automation of Contributor Licence Agreements (CLAs). It checks whether contributors have signed an agreement, adding labels to PRs if they have, or prompting for signature if they have not.

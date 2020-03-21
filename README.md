@@ -1,6 +1,7 @@
 # CLA Bot
 
 [![FINOS - Active](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-active.svg)](https://finosfoundation.atlassian.net/wiki/display/FINOS/Active)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffinos%2Fcla-bot.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffinos%2Fcla-bot?ref=badge_shield)
 
 See the [project page](https://colineberhardt.github.io/cla-bot/) for details.
 
@@ -30,3 +31,6 @@ Copyright (c) 2019 Colin Eberhardt
 The code in this repository is distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 SPDX-License-Identifier: [Apache-2.0](https://spdx.org/licenses/Apache-2.0)
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffinos%2Fcla-bot.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffinos%2Fcla-bot?ref=badge_large)

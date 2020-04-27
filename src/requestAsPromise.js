@@ -1,6 +1,16 @@
 const request = require("request");
 const logger = require("./logger");
 
+const isSuccess = (options, statusCode) => {
+  if (options.method === "DELETE") {
+    return (
+      statusCode.toString().startsWith("2") || statusCode.toString() === "404"
+    );
+  } else {
+    return statusCode.toString().startsWith("2");
+  }
+};
+
 module.exports = options =>
   new Promise((resolve, reject) => {
     const logUrl = options.url.split("?")[0];
@@ -12,7 +22,7 @@ module.exports = options =>
       } else if (
         response &&
         response.statusCode &&
-        !response.statusCode.toString().startsWith("2")
+        !isSuccess(options, response.statusCode)
       ) {
         logger.debug(`API Response ${logUrl}`, {
           statusCode: response.statusCode

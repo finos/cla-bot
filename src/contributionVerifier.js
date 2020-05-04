@@ -17,11 +17,13 @@ const domainFromEmail = email => "@" + email.split("@")[1];
 // return the list of committers who are not know contributors
 const contributorArrayVerifier = contributors => committers => {
   const lowerCaseContributors = contributors.map(c => c.toLowerCase());
+  // eslint-disable-next-line prettier/prettier
   const [emailVerification, usernameVerification] = partition(
     lowerCaseContributors,
     c => c.includes("@")
   );
 
+  // eslint-disable-next-line prettier/prettier
   const [domainVerification, exactEmailVerification] = partition(
     emailVerification,
     c => c.startsWith("@")

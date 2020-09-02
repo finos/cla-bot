@@ -100,7 +100,7 @@ describe("lambda function", () => {
         }
       },
       // next use the integration API to obtain an access token
-      "https://api.github.com/installations/1000/access_tokens": {
+      "https://api.github.com/app/installations/1000/access_tokens": {
         body: {
           token: installationToken
         }

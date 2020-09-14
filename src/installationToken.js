@@ -12,7 +12,7 @@ module.exports = installationId => {
   });
 
   return requestp({
-    url: `https://api.github.com/installations/${installationId}/access_tokens`,
+    url: `https://api.github.com/app/installations/${installationId}/access_tokens`,
     json: true,
     headers: {
       Authorization: `Bearer ${integrationToken}`,

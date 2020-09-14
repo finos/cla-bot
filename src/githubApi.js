@@ -50,8 +50,7 @@ exports.getLabels = issueUrl => ({
 });
 
 exports.deleteLabel = (issueUrl, label) => ({
-  url: `${issueUrl}/labels`,
-  body: [label],
+  url: `${issueUrl}/labels/${label}`,
   method: "DELETE"
 });
 

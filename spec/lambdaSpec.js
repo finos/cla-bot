@@ -121,6 +121,10 @@ describe("lambda function", () => {
       // or a label
       "http://foo.com/user/repo/issues/2/labels": {
         body: []
+      },
+      // potentially deleting old ones
+      "http://foo.com/user/repo/issues/2/labels/cla-signed": {
+        body: {}
       }
     };
 
@@ -347,12 +351,7 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
-            verifyRequest: opts => {
-              if (opts.method === "POST") {
-                expect(opts.body).toEqual(["cla-signed"]);
-              }
-            },
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             body: []
           },
           "http://foo.com/user/repo/pulls/2/commits": {
@@ -638,12 +637,7 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
-            verifyRequest: opts => {
-              if (opts.method === "POST") {
-                expect(opts.body).toEqual(["cla-signed"]);
-              }
-            },
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             body: []
           },
           "http://foo.com/user/repo/pulls/2/commits": {
@@ -678,10 +672,9 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             verifyRequest: opts => {
               if (opts.method !== "GET") {
-                expect(opts.body).toEqual(["cla-signed"]);
                 expect(opts.method).toEqual("DELETE");
               }
             },

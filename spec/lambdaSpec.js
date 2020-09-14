@@ -100,7 +100,7 @@ describe("lambda function", () => {
         }
       },
       // next use the integration API to obtain an access token
-      "https://api.github.com/installations/1000/access_tokens": {
+      "https://api.github.com/app/installations/1000/access_tokens": {
         body: {
           token: installationToken
         }
@@ -121,6 +121,10 @@ describe("lambda function", () => {
       // or a label
       "http://foo.com/user/repo/issues/2/labels": {
         body: []
+      },
+      // potentially deleting old ones
+      "http://foo.com/user/repo/issues/2/labels/cla-signed": {
+        body: {}
       }
     };
 
@@ -272,7 +276,7 @@ describe("lambda function", () => {
           "http://foo.com/user/repo/statuses/1234": {
             verifyRequest: opts => {
               // ensure the status is reported as a failure
-              expect(opts.body.state).toEqual("failure");
+              expect(opts.body.state).toEqual("error");
             }
           }
         })
@@ -347,12 +351,7 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
-            verifyRequest: opts => {
-              if (opts.method === "POST") {
-                expect(opts.body).toEqual(["cla-signed"]);
-              }
-            },
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             body: []
           },
           "http://foo.com/user/repo/pulls/2/commits": {
@@ -638,12 +637,7 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
-            verifyRequest: opts => {
-              if (opts.method === "POST") {
-                expect(opts.body).toEqual(["cla-signed"]);
-              }
-            },
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             body: []
           },
           "http://foo.com/user/repo/pulls/2/commits": {
@@ -678,10 +672,9 @@ describe("lambda function", () => {
               expect(opts.body.context).toEqual("verification/cla-signed");
             }
           },
-          "http://foo.com/user/repo/issues/2/labels": {
+          "http://foo.com/user/repo/issues/2/labels/cla-signed": {
             verifyRequest: opts => {
               if (opts.method !== "GET") {
-                expect(opts.body).toEqual(["cla-signed"]);
                 expect(opts.method).toEqual("DELETE");
               }
             },
@@ -790,7 +783,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual([]);
         done();
       });
@@ -810,7 +805,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["billy"]);
         done();
       });
@@ -837,7 +834,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "foo"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "foo" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["foo"]);
         done();
       });
@@ -852,8 +851,65 @@ describe("contributionVerifier", () => {
 
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["bob"]);
+        done();
+      });
+    });
+
+    it("should support verification via email address", done => {
+      const config = { contributors: ["billy@foo.com", "frank@foo.com"] };
+
+      const verifier = require("../src/contributionVerifier");
+
+      const commiters = [
+        { email: "billy@foo.com", login: "billy" },
+        { email: "foo@bar.com", login: "foo" }
+      ];
+
+      verifier(config)(commiters).then(nonContributors => {
+        expect(nonContributors).toEqual(["foo"]);
+        done();
+      });
+    });
+
+    it("should support verification via email address or login", done => {
+      const config = {
+        contributors: ["billy@foo.com", "frank@foo.com", "malcolm", "james"]
+      };
+
+      const verifier = require("../src/contributionVerifier");
+
+      const commiters = [
+        { email: "billy@foo.com" /* valid email */, login: "billy" },
+        { email: "foo@bar.com", login: "foo" },
+        { email: "malcolm@bar.com", login: "malcolm" /* valid username */ },
+        {
+          email: "frank@foo.com" /* valid email */,
+          login: "james" /* valid username */
+        }
+      ];
+
+      verifier(config)(commiters).then(nonContributors => {
+        expect(nonContributors).toEqual(["foo"]);
+        done();
+      });
+    });
+
+    it("should support verification via email domain", done => {
+      const config = { contributors: ["@foo.com"] };
+
+      const verifier = require("../src/contributionVerifier");
+
+      const commiters = [
+        { email: "billy@foo.com" /* valid email */, login: "billy" },
+        { email: "foo@bar.com", login: "foo" }
+      ];
+
+      verifier(config)(commiters).then(nonContributors => {
+        expect(nonContributors).toEqual(["foo"]);
         done();
       });
     });
@@ -872,7 +928,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "billy"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "billy" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["billy"]);
         done();
       });
@@ -899,7 +957,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual([]);
         done();
       });
@@ -926,7 +986,9 @@ describe("contributionVerifier", () => {
       mock("request", request);
       const verifier = require("../src/contributionVerifier");
 
-      verifier(config)(["bob", "foo"]).then(nonContributors => {
+      const commiters = [{ login: "bob" }, { login: "foo" }];
+
+      verifier(config)(commiters).then(nonContributors => {
         expect(nonContributors).toEqual(["foo"]);
         done();
       });

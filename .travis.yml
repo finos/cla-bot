@@ -1,9 +1,43 @@
 language: node_js
 node_js:
-- '8'
+- '12'
 
-before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_369f74a373d5_key -iv $encrypted_369f74a373d5_iv -in secrets.tar.enc -out secrets.tar -d ; tar xvf secrets.tar; fi"
+# NOTE. AWS user (represented by AWS_ACCESS_KEY_ID) must have the following IAM policies attached:
+# - AWSLambdaFullAccess
+# - IAMFullAccess
+# - AmazonS3FullAccess
+# - AmazonAPIGatewayAdministrator
+# - OperateCloudformationStacks
+# - AWSCloudFormationReadOnlyAccess
 
-after_success:
- - test $TRAVIS_BRANCH = "develop" && serverless deploy --stage dev
- - test $TRAVIS_BRANCH = "master" && serverless deploy --stage prod
+env:
+  global:
+    # travis encrypt AWS_ACCESS_KEY_ID=
+    - secure: "bUqNsZYrEVNb3Xi4oy4VqEdLh0/+UpQ9y6gU3l8J9UVtzWMQuQfk/qyI/HscZmN2GlGDTF3TI3S0qZRbnoHslnPNHsT12wz0ty+90YxmosbUpfNLnnfdMa/vZRS4QfAvGrzEBrfoOyFNQpnlsxeK85g+pDTQ41FnAgFLtL4iO6XUDx+x0LqqobL/G0PA/DWk3jBtf6Gw8g4Ju1TetoLMshZ1N8tlExiPshfplmcBMVyq2yZoHKiCXKsES6tLsGAws9i31GCcCFgiPeb4curT9nVVvuW6lcKCi6vBC/t7sQrjpQdVRpFozO9k4Ohx+k6Q6NfltEqHbyscTDKJ2w3vEAfUjjENPwNdVNhL/W7ggtPVKSzBWTda7QGNC/B3lfKqFDsYw0W10pmA+M32VMFIEqLkbrBn1H8uQ/NkpnmJZNe7rKRuK9g3HqSvlhLj0i1slXvTXLNUyyQck/Ja7XnhQQjEZxYkmgMRRy7C9+A9cJ7IhpH+HnuavIVTu0TnSQFmsOxOJxtb+AHGFUrXNFMbrqCj9mNTBL4RRUrylIEAH0+Qycm5lk5ExGNVkT9aI7z+qXBv93DBhts8Lfnt66FNQKGCXS3WhiKbIOtIHDlNJp3GpbLTyWpYh88+dkdP/4UfdRgC4sZqMYFohkg3q+MO/pAoq3gbiWf8Zljf1antThY="
+    # travis encrypt AWS_SECRET_ACCESS_KEY=
+    - secure: "vu0Co4m0mrOqo6FO/m4WMqPw5Y3XbrcFRIknmyc80vQAN0QR3/RejhFFyzFs3imRV5QtTG5od4wY3cNb1dsltVbjvvk3LqhAud9f/vXX2cHmQIjXoWY0pAcDULH/XTgs4aoZN1xJPuDzjH74b/GIBBtkQi8s//C9ekRntlHfA9m9Lzu8VzyK+vZTnfNi1492jYerHkP1p4Z7vpsaWnZNJhkn7bhP9vfUjXalRTaqhV/lYdSpjaC9Sh3yopoHkAR69Ji05HNb1+4HLH9v0M91ts0n23Zxq/yV2GQB6kJuGOWUiQucBnxHRhcG9JCMruR8CmQo9mL90ggASyiaSWt0dawgcqH5qWxZxvktwKaKINAr74Eso5wYYeEkiOeUvxGk08g8hTv0mciz0CmzQyILo3WWYVYjAA4m6CFsHjGSXWbTDMmG6NcPTpjpO4kwdrfLEtnb+uRQ1wxO8SIQMt5WCzTombvS7zlLemP8DfvUarJ8PDx9ZUBYg3XGGMMCG5TIDDFn1UxNXAUGUJbnnuLQ1wvcJ9Wzllanvu3E98+opE/Vva8/16TaQZJczsF42kNXNDFVKMWYhfhHMNJ7ehhEz1vc5SdpstF4WM5lNl3xpeuStc0a1DRRdOvdyWRA+OoPmGOBAIKYol64FzWE9rSE6EykavdcztllKdlp1k5uBGE="
+
+# travis encrypt-file src/serverless.env.yml
+before_install: "if [[ \"$TRAVIS_PULL_REQUEST\" = \"false\" ]]; then openssl aes-256-cbc -K $encrypted_92fe0ef674ee_key -iv $encrypted_92fe0ef674ee_iv -in secrets.tar.enc -out secrets.tar -d; tar xvf secrets.tar; fi"
+
+install:
+  - rm -rf node_modules
+  - npm install --production
+  - npm install -g node-license-validator
+
+script:
+  - npm run validate-license
+  - npm install
+  - npm test
+
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: serverless deploy --stage staging
+    on:
+      branch: develop
+  - provider: script
+    skip_cleanup: true
+    script: serverless deploy --stage prod
+    on:
+      branch: master

@@ -101,9 +101,7 @@ exports.handler = constructHandler(async webhook => {
   // determine the URL for storing the event log
   const org = pullRequestUrl.split("/")[4];
   const logUrl = `${org}-${uuid()}`;
-  const logFile = `https://s3.amazonaws.com/${
-    process.env.LOGGING_BUCKET
-  }/${logUrl}`;
+  const logFile = `https://s3.amazonaws.com/${process.env.LOGGING_BUCKET}/${logUrl}`;
   logger.logFile(logUrl);
 
   if (webhook.action === "created") {
@@ -135,6 +133,25 @@ exports.handler = constructHandler(async webhook => {
     addRecheckComment
   } = applyToken(token);
 
+  logger.info("Obtaining the list of commits for the pull request");
+  const commits = await getCommits(pullRequestUrl);
+
+  logger.info(
+    `Total Commits: ${commits.length}, checking CLA status for committers`
+  );
+
+  // PRs include the head sha, for comments we have to determine this from the commit history
+  let headSha;
+  if (webhook.pull_request) {
+    headSha = webhook.pull_request.head.sha;
+  } else {
+    headSha = commits[commits.length - 1].sha;
+  }
+
+  const unresolvedLoginNames = sortUnique(
+    commits.filter(c => c.author == null).map(c => c.commit.author.name)
+  );
+
   let orgConfig;
   try {
     logger.info("Attempting to obtain organisation level .clabot file URL");
@@ -156,30 +173,13 @@ exports.handler = constructHandler(async webhook => {
   const config = await getFile(orgConfig);
 
   if (!is.json(config)) {
+    logger.error("The .clabot file is not valid JSON");
+    await setStatus(webhook, headSha, "error", logFile);
     throw new Error("The .clabot file is not valid JSON");
   }
 
   // merge with default config options
   const botConfig = Object.assign({}, defaultConfig, config);
-
-  logger.info("Obtaining the list of commits for the pull request");
-  const commits = await getCommits(pullRequestUrl);
-
-  logger.info(
-    `Total Commits: ${commits.length}, checking CLA status for committers`
-  );
-
-  // PRs include the head sha, for comments we have to determine this from the commit history
-  let headSha;
-  if (webhook.pull_request) {
-    headSha = webhook.pull_request.head.sha;
-  } else {
-    headSha = commits[commits.length - 1].sha;
-  }
-
-  const unresolvedLoginNames = sortUnique(
-    commits.filter(c => c.author == null).map(c => c.commit.author.name)
-  );
 
   const removeLabelAndSetFailureStatus = async users => {
     await deleteLabel(issueUrl, botConfig.label);
@@ -200,9 +200,13 @@ exports.handler = constructHandler(async webhook => {
     );
     message = await removeLabelAndSetFailureStatus(unidentifiedString);
   } else {
-    const committers = sortUnique(
-      commits.map(c => c.author.login.toLowerCase())
-    );
+    // the GitHub commit contains git author information (within commit.author), and GitHub author
+    // information (with author), we need both depending on verification more, so combine.
+    // see: https://developer.github.com/v3/pulls/#list-commits-on-a-pull-request
+    const committers = commits.map(c => ({
+      ...(c.commit ? c.commit.author : {}),
+      ...c.author
+    }));
     const verifier = contributionVerifier(botConfig);
     const nonContributors = await verifier(committers, token);
 
@@ -226,7 +230,7 @@ exports.handler = constructHandler(async webhook => {
 
       message = `added label ${botConfig.label} to ${pullRequestUrl}`;
     } else {
-      const usersWithoutCLA = nonContributors
+      const usersWithoutCLA = sortUnique(nonContributors)
         .map(contributorId => `@${contributorId}`)
         .join(", ");
       logger.info(

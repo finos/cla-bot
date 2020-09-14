@@ -2,14 +2,14 @@ service: cla-bot
 
 resources:
   Resources:
-    S3BucketPhotos:
+    S3BucketLogs:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${file(./src/serverless.env.yml):${opt:stage}.LOGGING_BUCKET}
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   region: us-east-1
   iamRoleStatements:
     - Effect: Allow

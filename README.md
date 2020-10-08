@@ -101,7 +101,9 @@ All of the configuration relating to this bot is performed via the `.clabot` fil
 
 ### .clabot resolution
 
-The `.clabot` is automatically resolved in the root project folder (for example this project resolves the following file, `https://github.com/ColinEberhardt/cla-bot/.clabot`). If you have multiple repositories within the same organization, or user account, that have the same contributors, you can create a single configuration by adding a project called `clabot-config`. For example, for my personal projects I could configure the bot via `https://github.com/ColinEberhardt/clabot-config/.clabot`.
+The `.clabot` is automatically resolved in the root project folder (for example this project resolves the following file, `https://github.com/ColinEberhardt/cla-bot/.clabot`).
+
+If you have multiple repositories within the same organization, or user account, that have the same contributors, you can create a single configuration by adding a project called `clabot-config`. For example, for my personal projects I could configure the bot via `https://github.com/ColinEberhardt/clabot-config/.clabot`. Also make sure to give the "cla-bot Github App" access rights to `clabot-config` repository. You can do this either when installing the "cla-bot Github App" or later by visiting [https://github.com/apps/cla-bot](https://github.com/apps/cla-bot).
 
 Note, if you do not want the list of contributors to be public, the `clabot-config` project can be private.
 
